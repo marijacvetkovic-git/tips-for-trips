@@ -4,6 +4,9 @@ from flask import render_template,flash,redirect, url_for
 from app import app , bcrypt, db
 from app.forms import LogInForm, RegistrationForm
 from app.models import User
+from gqlalchemy.query_builders.memgraph_query_builder import Operator
+from gqlalchemy import match
+from flask_login import login_user
 
 posts = [
     {
@@ -49,11 +52,26 @@ def register():
 def login():
     form = LogInForm()
     if form.validate_on_submit():
-        if form.username.data == 'admin' and form.password.data == 'password':
-            flash('You have been logged in!', 'success')
-            return redirect(url_for('home'))
-        else:
+        users=(
+          match()
+          .node(labels="User",variable="u")
+          .where(item="u.username",operator=Operator.EQUAL,literal=form.username.data)
+          .return_(("u","user"))
+          .execute()
+          )
+        listOfUsers=list(users)
+        if not listOfUsers :
             flash('Login Unsuccessful. Please check username and password', 'danger')
+        else: 
+            
+            user:User=(listOfUsers[0])['user']
+            if not bcrypt.check_password_hash(user.password,form.password.data):
+                flash('Login Unsuccessful. Please check username and password', 'danger')
+            else:
+                login_user(user,remember=form.remember.data)
+                flash('You have been logged in!', 'success')
+                return redirect(url_for('home'))
+        
     return render_template('login.html', title='Login', form=form)
 
 
