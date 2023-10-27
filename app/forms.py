@@ -3,19 +3,15 @@ from flask_wtf import FlaskForm
 from wtforms import BooleanField, FloatField, StringField,PasswordField,SubmitField,DateField, ValidationError
 from wtforms.validators import DataRequired, Length, Email, EqualTo
 from app import db
-from gqlalchemy import connection
+from gqlalchemy import match
+from gqlalchemy.query_builders.memgraph_query_builder import Operator
+
 
 
 
 
 class RegistrationForm(FlaskForm):
-    
-    def validate_date_range(form, field):
-        min_date = date.min
-        max_date = date.today()
-        if field.data < min_date or field.data > max_date:
-           raise ValidationError('The date of birth must not be in the future.')
-        
+          
     username=StringField('Username', validators=[DataRequired(),Length(min=2,max=50)])
     email= StringField('Email', validators=[DataRequired(), Email()] )
     password= PasswordField('Password', validators=[DataRequired()])
@@ -54,4 +50,28 @@ class LogInForm(FlaskForm):
     remember = BooleanField('Remember Me')
     submit = SubmitField('Log In')
     
+class AttractionCreateForm(FlaskForm):
+    def validate_longitude(longitude,latitude):     
+        attractions=(
+          match()
+          .node(labels="Attraction",variable="a")
+          .where(item="a.longitude",operator=Operator.EQUAL,literal=longitude)
+          .and_where(item="a.latitude",operator=Operator.EQUAL,literal=latitude)
+          .return_(("a","attraction"))
+          .execute()
+          )
+        listOfAttractions=list(attractions)
+        if listOfAttractions:
+            raise ValidationError('Some attraction already exists at that location') 
+            
+    name=StringField('Name', validators=[DataRequired()])
+    description= StringField('Description', validators=[DataRequired()])
+    longitude=FloatField('Longitude', validators=[DataRequired(),validate_longitude])
+    latitude=FloatField('Latitude', validators=[DataRequired(),validate_longitude])
+    submit = SubmitField('Add')
     
+   
+
+    
+
+        

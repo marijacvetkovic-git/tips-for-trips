@@ -2,8 +2,8 @@
 import uuid
 from flask import render_template,flash,redirect, url_for
 from app import app , bcrypt, db
-from app.forms import LogInForm, RegistrationForm
-from app.models import User
+from app.forms import LogInForm, RegistrationForm,AttractionCreateForm
+from app.models import Attraction, User
 from gqlalchemy.query_builders.memgraph_query_builder import Operator
 from gqlalchemy import match
 from flask_login import login_user
@@ -74,4 +74,19 @@ def login():
         
     return render_template('login.html', title='Login', form=form)
 
+@app.route("/createAttraction",methods=['GET','POST'])
+def createAttraction():
+    form= AttractionCreateForm()
+    if form.validate_on_submit():
+        attraction=Attraction(id=str(uuid.uuid4()),name=form.name.data,description=form.description.data,longitude=form.longitude.data,latitude=form.latitude.data)
+        attraction.save(db)
 
+        flash(f'Your attraction is added!','success')
+        return redirect(url_for('home'))
+    
+    
+    return render_template('addAttraction.html', title='Add attraction', form=form)
+    
+    
+    
+    

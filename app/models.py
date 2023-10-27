@@ -24,3 +24,14 @@ class User(Node,UserMixin):
     latitude: float = Field(exists=True, db=db)
     longitude: float = Field(exists=True, db=db)
         
+class Attraction(Node):
+    id:str = Field(index=True, unique=True, exists=True, db=db)
+    name:str=Field(index=True, unique=True, exists=True, db=db)
+    latitude: float = Field(exists=True, db=db)
+    longitude: float = Field(exists=True, db=db)
+    description:str = Field(exists=True,db=db)
+
+
+    
+
+    
