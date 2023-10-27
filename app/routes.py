@@ -78,7 +78,7 @@ def login():
 def createAttraction():
     form= AttractionCreateForm()
     if form.validate_on_submit():
-        attraction=Attraction(id=str(uuid.uuid4()),name=form.name.data,description=form.description.data,longitude=form.longitude.data,latitude=form.latitude.data)
+        attraction=Attraction(id=str(uuid.uuid4()),name=form.name.data,description=form.description.data,longitude=form.longitude.data,latitude=form.latitude.data,familyFriendly=form.family_friendly.data)
         attraction.save(db)
 
         flash(f'Your attraction is added!','success')

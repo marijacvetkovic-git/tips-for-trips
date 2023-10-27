@@ -68,6 +68,7 @@ class AttractionCreateForm(FlaskForm):
     description= StringField('Description', validators=[DataRequired()])
     longitude=FloatField('Longitude', validators=[DataRequired(),validate_longitude])
     latitude=FloatField('Latitude', validators=[DataRequired(),validate_longitude])
+    family_friendly=BooleanField("Family friendly")
     submit = SubmitField('Add')
     
    

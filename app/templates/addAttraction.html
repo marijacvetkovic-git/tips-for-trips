@@ -58,6 +58,10 @@
                         {{ form.latitude(class="form-control form-control-lg") }}
                     {% endif %}
                 </div>
+                <div class = "form-check">
+                    {{form.family_friendly(class="form=check-input")}}
+                    {{form.family_friendly.label(class="form=check-label")}}
+                </div>
             </fieldset>
             <div class="form-group">
                 {{ form.submit(class="btn btn-outline-info") }}
@@ -65,7 +69,7 @@
         </form>
     </div>
 
-
+    
 
     
 {% endblock content %}
