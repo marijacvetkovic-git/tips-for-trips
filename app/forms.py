@@ -1,14 +1,10 @@
 from datetime import date
 from flask_wtf import FlaskForm
-from wtforms import BooleanField, FloatField, StringField,PasswordField,SubmitField,DateField, ValidationError
+from wtforms import BooleanField, FloatField, StringField,PasswordField,SubmitField,DateField, ValidationError,TimeField
 from wtforms.validators import DataRequired, Length, Email, EqualTo
 from app import db
 from gqlalchemy import match
 from gqlalchemy.query_builders.memgraph_query_builder import Operator
-
-
-
-
 
 class RegistrationForm(FlaskForm):
           
@@ -51,12 +47,14 @@ class LogInForm(FlaskForm):
     submit = SubmitField('Log In')
     
 class AttractionCreateForm(FlaskForm):
-    def validate_longitude(longitude,latitude):     
+    def validate_longitude(formica,l):
+        p=formica.longitude.data
+        l=formica.latitude.data
         attractions=(
           match()
           .node(labels="Attraction",variable="a")
-          .where(item="a.longitude",operator=Operator.EQUAL,literal=longitude)
-          .and_where(item="a.latitude",operator=Operator.EQUAL,literal=latitude)
+          .where(item="a.longitude",operator=Operator.EQUAL,literal=formica.longitude.data)
+          .and_where(item="a.latitude",operator=Operator.EQUAL,literal=formica.latitude.data)
           .return_(("a","attraction"))
           .execute()
           )
@@ -68,11 +66,45 @@ class AttractionCreateForm(FlaskForm):
     description= StringField('Description', validators=[DataRequired()])
     longitude=FloatField('Longitude', validators=[DataRequired(),validate_longitude])
     latitude=FloatField('Latitude', validators=[DataRequired(),validate_longitude])
+    duration_of_visit=TimeField('Duration of visit', validators=[DataRequired()])
+    parking=BooleanField("Parking")
     family_friendly=BooleanField("Family friendly")
     submit = SubmitField('Add')
     
-   
-
+class TypeOfAttractionCreateForm(FlaskForm):
+    name=StringField('Name', validators=[DataRequired()])
+    submit = SubmitField('Add')
     
+    def validate_name(self,name): 
+        n=name    
+        typeOfAttractions=(
+          match()
+          .node(labels="TypeOfAttraction",variable="a")
+          .where(item="a.name",operator=Operator.EQUAL,literal=name.data)
+          .return_(("a","typeOfAttraction"))
+          .execute()
+          )
+        listOftypeOfAttractions=list(typeOfAttractions)
+        if listOftypeOfAttractions:
+            raise ValidationError('Type of attraction with that name already exists !')
+  
+
+class ActivityCreateForm(FlaskForm):
+    name=StringField('Name', validators=[DataRequired()])
+    submit = SubmitField('Add')
+    
+    def validate_name(self,name): 
+        n=name    
+        activities=(
+          match()
+          .node(labels="Activity",variable="a")
+          .where(item="a.name",operator=Operator.EQUAL,literal=name.data)
+          .return_(("a","activity"))
+          .execute()
+          )
+        listOfactivities=list(activities)
+        if listOfactivities:
+            raise ValidationError('Activity with that name already exists !')
+  
 
         

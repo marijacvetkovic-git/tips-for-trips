@@ -58,6 +58,23 @@
                         {{ form.latitude(class="form-control form-control-lg") }}
                     {% endif %}
                 </div>
+                <div class="form-group">
+                    {{ form.duration_of_visit.label(class="form-control-label") }}
+                    {% if form.duration_of_visit.errors %}
+                        {{ form.duration_of_visit(class="form-control form-control-lg is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.duration_of_visit.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.duration_of_visit(class="form-control form-control-lg") }}
+                    {% endif %}
+                </div>
+                <div class = "form-check">
+                    {{form.parking(class="form=check-input")}}
+                    {{form.parking.label(class="form=check-label")}}
+                </div>
                 <div class = "form-check">
                     {{form.family_friendly(class="form=check-input")}}
                     {{form.family_friendly.label(class="form=check-label")}}

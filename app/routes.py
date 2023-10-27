@@ -2,8 +2,8 @@
 import uuid
 from flask import render_template,flash,redirect, url_for
 from app import app , bcrypt, db
-from app.forms import LogInForm, RegistrationForm,AttractionCreateForm
-from app.models import Attraction, User
+from app.forms import ActivityCreateForm, LogInForm, RegistrationForm,AttractionCreateForm,TypeOfAttractionCreateForm
+from app.models import Activity, Attraction, TypeOfAttraction, User
 from gqlalchemy.query_builders.memgraph_query_builder import Operator
 from gqlalchemy import match
 from flask_login import login_user
@@ -78,7 +78,7 @@ def login():
 def createAttraction():
     form= AttractionCreateForm()
     if form.validate_on_submit():
-        attraction=Attraction(id=str(uuid.uuid4()),name=form.name.data,description=form.description.data,longitude=form.longitude.data,latitude=form.latitude.data,familyFriendly=form.family_friendly.data)
+        attraction=Attraction(id=str(uuid.uuid4()),name=form.name.data,description=form.description.data,longitude=form.longitude.data,latitude=form.latitude.data,familyFriendly=form.family_friendly.data,parking=form.parking.data,durationOfVisit=form.duration_of_visit.data)
         attraction.save(db)
 
         flash(f'Your attraction is added!','success')
@@ -86,7 +86,34 @@ def createAttraction():
     
     
     return render_template('addAttraction.html', title='Add attraction', form=form)
+
+@app.route("/createTypeOfAttraction",methods=['GET','POST'])
+def createTypeOfAttraction():
+    form = TypeOfAttractionCreateForm()
+    if form.validate_on_submit():
+        typeOfAttraction=TypeOfAttraction(id=str(uuid.uuid4()),name=form.name.data)
+        typeOfAttraction.save(db)
+
+        flash(f'Your type of attraction is added!','success')
+        return redirect(url_for('home'))
     
+    
+    return render_template('addTypeOfAttraction.html', title='Add type of attraction', form=form)
+    
+@app.route("/createActivity",methods=['GET','POST'])
+def createActivity():
+    form = ActivityCreateForm()
+    if form.validate_on_submit():
+        activity=Activity(id=str(uuid.uuid4()),name=form.name.data)
+        activity.save(db)
+
+        flash(f'Your activity is added!','success')
+        return redirect(url_for('home'))
+    
+    
+    return render_template('addActivity.html', title='Add activity', form=form)
+    
+  
     
     
     

@@ -1,8 +1,8 @@
-import datetime
+
 from gqlalchemy import Node,Relationship, Field,match
 from typing import Optional
 from app import db,login_menager
-from datetime import date, timedelta
+from datetime import date, time, timedelta,datetime
 from flask_login import UserMixin
 from gqlalchemy.query_builders.memgraph_query_builder import Operator
 @login_menager.user_loader
@@ -27,20 +27,21 @@ class User(Node,UserMixin):
         
 class Attraction(Node):
     id:str = Field(index=True, unique=True, exists=True, db=db)
-    name:str=Field(index=True, unique=True, exists=True, db=db)
+    name:str=Field(exists=True, db=db)
+     # TODO: Vd ali nam treba unique ime d abude..imamo dva night and day npr lokala
     latitude: float = Field(exists=True, db=db)
     longitude: float = Field(exists=True, db=db)
     description:str = Field(exists=True,db=db)
     familyFriendly:bool=Field(exists=True,db=db)
     # TODO: Vidi treba li exists true da bude
-    durationOfVisit:timedelta=Field(exists=True,db=db)
+    durationOfVisit:time=Field(exists=True,db=db)
     parking:bool=Field(exists=True,db=db)
 
 class TypeOfAttraction(Node):
     id:str= Field(index=True, unique=True, exists=True, db=db)
     name:str= Field(index=True, unique=True, exists=True, db=db)
     
-class Activities(Node):
+class Activity(Node):
     id:str= Field(index=True, unique=True, exists=True, db=db)
     name:str= Field(index=True, unique=True, exists=True, db=db)
    
