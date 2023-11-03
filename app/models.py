@@ -44,6 +44,12 @@ class TypeOfAttraction(Node):
 class Activity(Node):
     id:str= Field(index=True, unique=True, exists=True, db=db)
     name:str= Field(index=True, unique=True, exists=True, db=db)
+    
+    
+class City(Node):
+    id:str= Field(index=True, unique=True, exists=True, db=db)
+    name:str= Field(index=True, unique=True, exists=True, db=db)
+    description:str = Field(exists=True,db=db)   
    
 class Likes(Relationship,type="LIKES"):
     dateAndTime:datetime = Field(exists=True, db=db)

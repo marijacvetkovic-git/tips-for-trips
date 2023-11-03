@@ -46,7 +46,7 @@ class LogInForm(FlaskForm):
     remember = BooleanField('Remember Me')
     submit = SubmitField('Log In')
     
-class AttractionCreateForm(FlaskForm):
+class AddAttractionForm(FlaskForm):
     def validate_longitude(formica,l):
         p=formica.longitude.data
         l=formica.latitude.data
@@ -71,7 +71,7 @@ class AttractionCreateForm(FlaskForm):
     family_friendly=BooleanField("Family friendly")
     submit = SubmitField('Add')
     
-class TypeOfAttractionCreateForm(FlaskForm):
+class AddTypeOfAttractionForm(FlaskForm):
     name=StringField('Name', validators=[DataRequired()])
     submit = SubmitField('Add')
     
@@ -89,12 +89,11 @@ class TypeOfAttractionCreateForm(FlaskForm):
             raise ValidationError('Type of attraction with that name already exists !')
   
 
-class ActivityCreateForm(FlaskForm):
+class AddActivityForm(FlaskForm):
     name=StringField('Name', validators=[DataRequired()])
     submit = SubmitField('Add')
     
     def validate_name(self,name): 
-        n=name    
         activities=(
           match()
           .node(labels="Activity",variable="a")
@@ -105,6 +104,23 @@ class ActivityCreateForm(FlaskForm):
         listOfactivities=list(activities)
         if listOfactivities:
             raise ValidationError('Activity with that name already exists !')
+  
+class AddCityForm(FlaskForm):
+    name=StringField('Name', validators=[DataRequired()])
+    description=StringField('Description', validators=[DataRequired()])
+    submit = SubmitField('Add')
+    
+    def validate_name(self,name): 
+        cities=(
+          match()
+          .node(labels="City",variable="c")
+          .where(item="c.name",operator=Operator.EQUAL,literal=name.data)
+          .return_(("c","city"))
+          .execute()
+          )
+        listOfCities=list(cities)
+        if listOfCities:
+            raise ValidationError('City with that name already exists !')
   
 
         

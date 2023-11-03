@@ -2,8 +2,8 @@
 import uuid
 from flask import render_template,flash,redirect, url_for
 from app import app , bcrypt, db
-from app.forms import ActivityCreateForm, LogInForm, RegistrationForm,AttractionCreateForm,TypeOfAttractionCreateForm
-from app.models import Activity, Attraction, TypeOfAttraction, User
+from app.forms import AddActivityForm, AddCityForm, AddTypeOfAttractionForm, LogInForm, RegistrationForm,AddAttractionForm
+from app.models import Activity, Attraction, City, TypeOfAttraction, User
 from gqlalchemy.query_builders.memgraph_query_builder import Operator
 from gqlalchemy import match
 from flask_login import login_user
@@ -74,9 +74,9 @@ def login():
         
     return render_template('login.html', title='Login', form=form)
 
-@app.route("/createAttraction",methods=['GET','POST'])
-def createAttraction():
-    form= AttractionCreateForm()
+@app.route("/addAttraction",methods=['GET','POST'])
+def addAttraction():
+    form= AddAttractionForm()
     if form.validate_on_submit():
         attraction=Attraction(id=str(uuid.uuid4()),name=form.name.data,description=form.description.data,longitude=form.longitude.data,latitude=form.latitude.data,familyFriendly=form.family_friendly.data,parking=form.parking.data,durationOfVisit=form.duration_of_visit.data)
         attraction.save(db)
@@ -89,7 +89,7 @@ def createAttraction():
 
 @app.route("/createTypeOfAttraction",methods=['GET','POST'])
 def createTypeOfAttraction():
-    form = TypeOfAttractionCreateForm()
+    form = AddTypeOfAttractionForm()
     if form.validate_on_submit():
         typeOfAttraction=TypeOfAttraction(id=str(uuid.uuid4()),name=form.name.data)
         typeOfAttraction.save(db)
@@ -102,7 +102,7 @@ def createTypeOfAttraction():
     
 @app.route("/createActivity",methods=['GET','POST'])
 def createActivity():
-    form = ActivityCreateForm()
+    form = AddActivityForm()
     if form.validate_on_submit():
         activity=Activity(id=str(uuid.uuid4()),name=form.name.data)
         activity.save(db)
@@ -112,8 +112,20 @@ def createActivity():
     
     
     return render_template('addActivity.html', title='Add activity', form=form)
+
+@app.route("/createCity",methods=['GET','POST'])
+def createCity():
+    form = AddCityForm()
+    if form.validate_on_submit():
+        city=City(id=str(uuid.uuid4()),name=form.name.data,description=form.description.data)
+        city.save(db)
+
+        flash(f'Your city is added!','success')
+        return redirect(url_for('home'))
     
-  
     
+    return render_template('addCity.html', title='Add city', form=form)
+
+
     
     
