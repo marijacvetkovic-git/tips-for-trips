@@ -37,7 +37,7 @@ class Attraction(Node):
     durationOfVisit:time=Field(exists=True,db=db)
     parking:bool=Field(exists=True,db=db)
 
-class TypeOfAttraction(Node):
+class Hashtag(Node):
     id:str= Field(index=True, unique=True, exists=True, db=db)
     name:str= Field(index=True, unique=True, exists=True, db=db)
     
@@ -59,18 +59,15 @@ class Visited(Relationship,type="VISITED"):
     # TODO: Da li da se pamti rate ovde? ili da napravim klasu komentar i rate
 
 class HasActivity(Relationship,type="HAS_ACTIVITY"):
-    durationOfActivity:timedelta=Field(exists=True,db=db)
+    durationOfActivity:time=Field(exists=True,db=db)
     experience:bool=Field(exists=True,db=db)
     minAge:int=Field(exists=True,db=db)
     maxAge:int=Field(exists=True,db=db)
     # TODO: Da li da se pamti min i max age ili samo d ali je za decu...jer sam gore napomenula u znamenitostima da ima samo d ali je family friendly..pod time mislice na decu
     
+class HasHashtag(Relationship,type="HAS_HASHTAG"):
+    pass
 
-     
-
-    
-
-
-    
-
-    
+class Visited(Relationship, type =" VISITED"):
+    rate:int=Field(exists=True,db=db)
+    dateAndTime:datetime = Field(exists=True, db=db)

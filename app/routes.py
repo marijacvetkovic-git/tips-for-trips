@@ -1,12 +1,20 @@
 
+import datetime
 import uuid
+from click import DateTime
 from flask import render_template,flash,redirect, url_for
 from app import app , bcrypt, db
-from app.forms import AddActivityForm, AddCityForm, AddTypeOfAttractionForm, LogInForm, RegistrationForm,AddAttractionForm
-from app.models import Activity, Attraction, City, TypeOfAttraction, User
+from app.forms import AddActivityForm, AddCityForm, AddHasActivityForm, AddHasHashForm, AddHashtagForm, AddVisitedForm, LogInForm, RegistrationForm,AddAttractionForm
+from app.models import Activity, Attraction, City, HasActivity, HasHashtag, Hashtag, User, Visited
 from gqlalchemy.query_builders.memgraph_query_builder import Operator
 from gqlalchemy import match
 from flask_login import login_user
+import pandas as pd
+import numpy as py
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.cluster import KMeans
+
 
 posts = [
     {
@@ -87,18 +95,18 @@ def addAttraction():
     
     return render_template('addAttraction.html', title='Add attraction', form=form)
 
-@app.route("/createTypeOfAttraction",methods=['GET','POST'])
-def createTypeOfAttraction():
-    form = AddTypeOfAttractionForm()
+@app.route("/createHashtag",methods=['GET','POST'])
+def createHashtag():
+    form = AddHashtagForm()
     if form.validate_on_submit():
-        typeOfAttraction=TypeOfAttraction(id=str(uuid.uuid4()),name=form.name.data)
-        typeOfAttraction.save(db)
+        hashtag=Hashtag(id=str(uuid.uuid4()),name=form.name.data)
+        hashtag.save(db)
 
         flash(f'Your type of attraction is added!','success')
         return redirect(url_for('home'))
     
     
-    return render_template('addTypeOfAttraction.html', title='Add type of attraction', form=form)
+    return render_template('addHashtag.html', title='Add hashtag', form=form)
     
 @app.route("/createActivity",methods=['GET','POST'])
 def createActivity():
@@ -126,6 +134,61 @@ def createCity():
     
     return render_template('addCity.html', title='Add city', form=form)
 
+@app.route("/createRelationship_HAS_HASHTAG",methods=['GET','POST'])
+def createRelationship_HAS_HASHTAG():
+    form = AddHasHashForm()
+    m=form.validate_on_submit()
+    if m:
+        
+        HasHashtag(_start_node_id=form.tupleForResult[0],_end_node_id=form.tupleForResult[1]).save(db)
 
+        flash(f'Your relationship is added!','success')
+        return redirect(url_for('home'))
     
     
+    return render_template('addHashashtag.html', title='Add has hastag', form=form)
+
+@app.route("/createRelationship_HAS_ACTIVITY",methods=['GET','POST'])
+def createRelationship_HAS_ACTIVITY():
+    form = AddHasActivityForm()
+    if form.validate_on_submit():
+        HasActivity(_start_node_id=form.tupleForResult[0],_end_node_id=form.tupleForResult[1],durationOfActivity=form.duration_of_activity.data,experience=form.experience.data,minAge=form.minAge.data,maxAge=form.maxAge.data).save(db)
+
+        flash(f'Your relationship is added!','success')
+        return redirect(url_for('home'))
+    
+    
+    return render_template('addHasActivity.html', title='Add has hastag', form=form)  
+
+@app.route("/createRelationship_VISITED",methods=['GET','POST'])
+def createRelationship_VISITED():
+    form = AddVisitedForm()
+    if form.validate_on_submit():
+        Visited(_start_node_id=form.tupleForResult[0],_end_node_id=form.tupleForResult[1],rate=form.rate.data,dateAndTime=datetime.datetime.now()).save(db)
+
+        flash(f'Your relationship is added!','success')
+        return redirect(url_for('home'))
+    
+    
+    return render_template('addVisited.html', title='Add has hastag', form=form)  
+
+
+# @app.route("/proba",methods=['GET','POST'])
+# def proba():
+#     query = "MATCH (n:User) RETURN n;"
+#     users=(
+#           match()
+#           .node(labels="User",variable="u")
+#           .return_(("u","user"))
+#           .execute()
+#           )
+#     lista=list(users)
+#     listOfProperties=[]
+#     for dictoneryItem in lista:
+#         listOfProperties.append(dictoneryItem['user'])
+#     df=pd.DataFrame(listOfProperties)
+#     print(df.head())
+#     x=df.iloc[:,[3,4]]
+#     print(x.values)
+#     #u tuplovima su upakovani podaci
+#     return df.head() 

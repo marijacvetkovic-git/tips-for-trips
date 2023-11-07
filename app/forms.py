@@ -1,10 +1,12 @@
 from datetime import date
 from flask_wtf import FlaskForm
-from wtforms import BooleanField, FloatField, StringField,PasswordField,SubmitField,DateField, ValidationError,TimeField
+from wtforms import BooleanField, FloatField, IntegerField, StringField,PasswordField,SubmitField,DateField, ValidationError,TimeField
 from wtforms.validators import DataRequired, Length, Email, EqualTo
 from app import db
 from gqlalchemy import match
 from gqlalchemy.query_builders.memgraph_query_builder import Operator
+
+from app.models import Activity, Attraction, Hashtag
 
 class RegistrationForm(FlaskForm):
           
@@ -71,22 +73,22 @@ class AddAttractionForm(FlaskForm):
     family_friendly=BooleanField("Family friendly")
     submit = SubmitField('Add')
     
-class AddTypeOfAttractionForm(FlaskForm):
+class AddHashtagForm(FlaskForm):
     name=StringField('Name', validators=[DataRequired()])
     submit = SubmitField('Add')
     
     def validate_name(self,name): 
-        n=name    
-        typeOfAttractions=(
+        
+        hashtags=(
           match()
-          .node(labels="TypeOfAttraction",variable="a")
-          .where(item="a.name",operator=Operator.EQUAL,literal=name.data)
-          .return_(("a","typeOfAttraction"))
+          .node(labels="Hashtag",variable="hashtag")
+          .where(item="hashtag.name",operator=Operator.EQUAL,literal=name.data)
+          .return_(("hashtag","hashtag"))
           .execute()
           )
-        listOftypeOfAttractions=list(typeOfAttractions)
-        if listOftypeOfAttractions:
-            raise ValidationError('Type of attraction with that name already exists !')
+        listOfhashtags=list(hashtags)
+        if listOfhashtags:
+            raise ValidationError('Hashtag with that name already exists !')
   
 
 class AddActivityForm(FlaskForm):
@@ -121,6 +123,152 @@ class AddCityForm(FlaskForm):
         listOfCities=list(cities)
         if listOfCities:
             raise ValidationError('City with that name already exists !')
-  
-
+        
+class AddHasHashForm(FlaskForm):
+    idOfAttraction=StringField("Id of attraction",validators=[DataRequired()])
+    idOfHashtag=StringField("Id of hashtag",validators=[DataRequired()])
+    submit = SubmitField('Add')
+    tupleForResult=("","")
+    
+    def validate_idOfAttraction(form,nzm):
+        attractions=(
+            match()
+            .node(labels="Attraction",variable="attraction")
+            .where(item="attraction.id",operator=Operator.EQUAL,literal=form.idOfAttraction.data)
+            .return_("attraction")
+            .execute()    
+        )
+        listOfAttractions=list(attractions)
+        if not listOfAttractions:
+            raise ValidationError('Attraction with specific id does not exist!')
+        attraction:Attraction =listOfAttractions[0]["attraction"]
+        idOfAttraction=attraction._id
+       
+        hashtags=(
+            match()
+            .node(labels="Hashtag",variable="hashtag")
+            .where(item="hashtag.id",operator=Operator.EQUAL,literal=form.idOfHashtag.data)
+            .return_("hashtag")
+            .execute()    
+        )
+        listOfhashtags=list(hashtags)
+        if not listOfhashtags:
+            raise ValidationError('Hashtag with specific id does not exist!')
+        hashtag:Hashtag =listOfhashtags[0]["hashtag"]
+        idOfHashtag=hashtag._id
+        
+        
+        hasHashtag=(
+            match()
+            .node(labels="Attraction",variable="attraction",id=form.idOfAttraction.data)
+            .to(relationship_type="HAS_HASHTAG")
+            .node(labels="Hashtag",variable="hashtag",id=form.idOfHashtag.data)
+            .return_(results=["attraction","hashtag"])
+            .execute()
+        )
+        listOfhasHashtag=list(hasHashtag)
+        if listOfhasHashtag:
+            raise ValidationError('Attraction with specific id already has hastag with specific id !')
+        form.tupleForResult=(idOfAttraction,idOfHashtag)
+            
+class AddHasActivityForm(FlaskForm):
+    idOfAttraction=StringField("Id of attraction",validators=[DataRequired()])
+    idOfActivity=StringField("Id of activity",validators=[DataRequired()])
+    duration_of_activity=TimeField('Duration of activity', validators=[DataRequired()])
+    experience=BooleanField("Experience")
+    minAge=IntegerField("Min age",validators=[DataRequired()])
+    maxAge=IntegerField("Max age",validators=[DataRequired()])
+    submit = SubmitField('Add')
+    tupleForResult=("","")
+    
+   
+    
+    def validate_idOfAttraction(form,nzm):
+        attractions=(
+            match()
+            .node(labels="Attraction",variable="attraction")
+            .where(item="attraction.id",operator=Operator.EQUAL,literal=form.idOfAttraction.data)
+            .return_("attraction")
+            .execute()    
+        )
+        listOfAttractions=list(attractions)
+        if not listOfAttractions:
+            raise ValidationError('Attraction with specific id does not exist!')
+        attraction:Attraction =listOfAttractions[0]["attraction"]
+        idOfAttraction=attraction._id
+       
+        activities=(
+            match()
+            .node(labels="Activity",variable="activity")
+            .where(item="activity.id",operator=Operator.EQUAL,literal=form.idOfActivity.data)
+            .return_("activity")
+            .execute()    
+        )
+        listOfactivities=list(activities)
+        if not listOfactivities:
+            raise ValidationError('Activity with specific id does not exist!')
+        activity:Activity =listOfactivities[0]["activity"]
+        idOfActivity=activity._id
+        
+        
+        hasActivity=(
+            match()
+            .node(labels="Attraction",variable="attraction",id=form.idOfAttraction.data)
+            .to(relationship_type="HAS_ACTIVITY")
+            .node(labels="Activity",variable="activity",id=form.idOfActivity.data)
+            .return_(results=["attraction","activity"])
+            .execute()
+        )
+        listOfhasActivity=list(hasActivity)
+        if listOfhasActivity:
+            raise ValidationError('Attraction with specific id already has activity with specific id !')
+        form.tupleForResult=(idOfAttraction,idOfActivity)
+              
+class AddVisitedForm(FlaskForm):
+    idOfAttraction=StringField("Id of attraction",validators=[DataRequired()])
+    idOfUser=StringField("Id of user",validators=[DataRequired()])
+    rate=IntegerField("Rate visit",validators=[DataRequired()])
+    submit = SubmitField('Add')
+    tupleForResult=("","")
+    
+    def validate_idOfAttraction(form,nzm):
+        attractions=(
+            match()
+            .node(labels="Attraction",variable="attraction")
+            .where(item="attraction.id",operator=Operator.EQUAL,literal=form.idOfAttraction.data)
+            .return_("attraction")
+            .execute()    
+        )
+        listOfAttractions=list(attractions)
+        if not listOfAttractions:
+            raise ValidationError('Attraction with specific id does not exist!')
+        attraction:Attraction =listOfAttractions[0]["attraction"]
+        idOfAttraction=attraction._id
+       
+        users=(
+            match()
+            .node(labels="User",variable="user")
+            .where(item="user.id",operator=Operator.EQUAL,literal=form.idOfUser.data)
+            .return_("user")
+            .execute()    
+        )
+        listOfusers=list(users)
+        if not listOfusers:
+            raise ValidationError('User with specific id does not exist!')
+        user:Hashtag =listOfusers[0]["user"]
+        idOfUser=user._id
+        
+        
+        visited=(
+            match()
+            .node(labels="User",variable="user",id=form.idOfUser.data)
+            .to(relationship_type="VISITED")
+            .node(labels="Attraction",variable="attraction",id=form.idOfAttraction.data)
+            .return_(results=["user","attraction"])
+            .execute()
+        )
+        listOfvisits=list(visited)
+        if listOfvisits:
+            raise ValidationError('User with specific id already visited attraction with specific id !')
+        form.tupleForResult=(idOfUser,idOfAttraction)
         
