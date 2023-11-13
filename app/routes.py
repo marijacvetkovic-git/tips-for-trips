@@ -1,4 +1,5 @@
 
+from ast import List
 import datetime
 import uuid
 from click import DateTime
@@ -143,7 +144,7 @@ def createRelationship_HAS_HASHTAG():
         HasHashtag(_start_node_id=form.tupleForResult[0],_end_node_id=form.tupleForResult[1]).save(db)
 
         flash(f'Your relationship is added!','success')
-        return redirect(url_for('home'))
+        return redirect(url_for('createRelationship_HAS_HASHTAG'))
     
     
     return render_template('addHashashtag.html', title='Add has hastag', form=form)
@@ -172,23 +173,68 @@ def createRelationship_VISITED():
     
     return render_template('addVisited.html', title='Add has hastag', form=form)  
 
+# DEO ZA RECOMMENDATION SYSTEM
+# K-means clustering
 
-# @app.route("/proba",methods=['GET','POST'])
-# def proba():
-#     query = "MATCH (n:User) RETURN n;"
-#     users=(
-#           match()
-#           .node(labels="User",variable="u")
-#           .return_(("u","user"))
-#           .execute()
-#           )
-#     lista=list(users)
-#     listOfProperties=[]
-#     for dictoneryItem in lista:
-#         listOfProperties.append(dictoneryItem['user'])
-#     df=pd.DataFrame(listOfProperties)
-#     print(df.head())
-#     x=df.iloc[:,[3,4]]
-#     print(x.values)
-#     #u tuplovima su upakovani podaci
-#     return df.head() 
+
+def proba():
+    
+    hasHashtag=(
+          match()
+          .node(labels="Attraction",variable="a")
+          .to(relationship_type="HAS_HASHTAG",variable="r")
+          .node(labels="Hashtag",variable="h")
+          .return_(results=["a","r","h"])
+          .execute()
+          )
+    
+    relationships=list(hasHashtag)
+    dictioneryOfAttractionHashtags=dict()
+    
+    for item in relationships:
+        attraction:Attraction=item["a"]
+        hashtag:Hashtag=item["h"]
+        idOfAttraction= attraction.id
+        idOfHashTag=hashtag.id
+        
+        if idOfAttraction not in dictioneryOfAttractionHashtags:
+            lista:List=[]
+            dictioneryOfAttractionHashtags[idOfAttraction]=lista
+        dictioneryOfAttractionHashtags[idOfAttraction].append(idOfHashTag)
+
+    
+    hashtags=(
+          match()
+          .node(labels="Hashtag",variable="hashtag")
+          .return_()
+          .execute()
+          )
+    
+    listOfHashtags=[]
+    for item in hashtags:
+        listOfHashtags.append(item["hashtag"].id)
+   
+    dictioneryOfAttractionVector=dict()
+    for attraction in dictioneryOfAttractionHashtags:
+        dictioneryOfAttractionVector[attraction]=[1 if hashtag in dictioneryOfAttractionHashtags[attraction] else 0 for hashtag in listOfHashtags]
+        
+    
+    x=py.array(list(dictioneryOfAttractionVector.values()))
+    print(x)
+    wcss=[]
+    for i in range(1,20):
+        kmeans=KMeans(n_clusters=i,init='k-means++',random_state=0)
+        print(kmeans.fit(x))
+        wcss.append(kmeans.inertia_)
+    plt.plot(range(1,20),wcss)
+    plt.title("The elbow method")
+    plt.xlabel("Number of clusters")
+    plt.ylabel("WCSS values")
+    plt.show()
+    
+    kmeansmodel=KMeans(n_clusters=5,init='k-means++',random_state=0)
+    y_kmeans= kmeansmodel.fit_predict(x)
+
+
+
+proba()
