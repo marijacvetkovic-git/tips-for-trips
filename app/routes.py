@@ -15,6 +15,7 @@ import numpy as py
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.cluster import KMeans
+from scipy.spatial.distance import cdist
 
 
 posts = [
@@ -222,18 +223,19 @@ def proba():
     x=py.array(list(dictioneryOfAttractionVector.values()))
     print(x)
     wcss=[]
-    for i in range(1,20):
+    distortions=[]
+    for i in range(1,10):
         kmeans=KMeans(n_clusters=i,init='k-means++',random_state=0)
         print(kmeans.fit(x))
         wcss.append(kmeans.inertia_)
-    plt.plot(range(1,20),wcss)
-    plt.title("The elbow method")
-    plt.xlabel("Number of clusters")
-    plt.ylabel("WCSS values")
-    plt.show()
-    
-    kmeansmodel=KMeans(n_clusters=5,init='k-means++',random_state=0)
+        distortions.append(sum(py.min(cdist(x, kmeans.cluster_centers_, 'euclidean'), axis=1)) / x.shape[0])
+
+# Pronalaženje tačke gde se promena u inerciji usporava (elbow point)
+    diff = py.diff(distortions, 2)
+    elbow_point = py.argmax(diff) + 2
+    kmeansmodel=KMeans(n_clusters=elbow_point,init='k-means++',random_state=0)
     y_kmeans= kmeansmodel.fit_predict(x)
+    print(y_kmeans)
 
 
 
