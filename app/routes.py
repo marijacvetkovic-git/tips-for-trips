@@ -1,6 +1,7 @@
 
 from ast import List
 import datetime
+import random
 import uuid
 from click import DateTime
 from flask import render_template,flash,redirect, url_for
@@ -185,7 +186,7 @@ def proba():
           .node(labels="Attraction",variable="a")
           .to(relationship_type="HAS_HASHTAG",variable="r")
           .node(labels="Hashtag",variable="h")
-          .return_(results=["a","r","h"])
+          .return_(results=["a.id","r","h.id"])
           .execute()
           )
     
@@ -193,10 +194,10 @@ def proba():
     dictioneryOfAttractionHashtags=dict()
     
     for item in relationships:
-        attraction:Attraction=item["a"]
-        hashtag:Hashtag=item["h"]
-        idOfAttraction= attraction.id
-        idOfHashTag=hashtag.id
+        # attraction:Attraction=item["a.id"]
+        # hashtag:Hashtag=item["h"]
+        idOfAttraction= item["a.id"]
+        idOfHashTag=item["h.id"]
         
         if idOfAttraction not in dictioneryOfAttractionHashtags:
             lista:List=[]
@@ -224,7 +225,7 @@ def proba():
     print(x)
     wcss=[]
     distortions=[]
-    for i in range(1,10):
+    for i in range(1,20):
         kmeans=KMeans(n_clusters=i,init='k-means++',random_state=0)
         print(kmeans.fit(x))
         wcss.append(kmeans.inertia_)
@@ -236,7 +237,151 @@ def proba():
     kmeansmodel=KMeans(n_clusters=elbow_point,init='k-means++',random_state=0)
     y_kmeans= kmeansmodel.fit_predict(x)
     print(y_kmeans)
-
-
-
+    plt.plot(range(1,20),wcss)
+    plt.title("The elbow method")
+    plt.xlabel("Number of clusters")
+    plt.ylabel("WCSS values")
+    plt.show()
+    
 proba()
+#dodavanjeAtrakcijaNaBrzinu ne radi zbog glupog vremena za durationOfVisit
+def dodavanjeAtrakcijaNaBrzinu():
+    attractions = [
+    {"name": "Machu Picchu", "longitude": -72.5450, "latitude": -13.1631, "description": "Drevni Inka grad smešten na vrhu Anda."},
+    {"name": "Eiffel Tower", "longitude": 2.2945, "latitude": 48.8588, "description": "Ikonična čelična kula u Parizu."},
+    {"name": "Grand Canyon", "longitude": -112.1120, "latitude": 36.0551, "description": "Veliki kanjon u saveznoj državi Arizona."},
+    {"name": "Great Barrier Reef", "longitude": 147.7167, "latitude": -18.2864, "description": "Svetski poznat koralni greben u Koralnom moru."},
+    {"name": "Colosseum", "longitude": 12.4924, "latitude": 41.8902, "description": "Antički amfiteatar u Rimu."},
+    {"name": "Petra", "longitude": 35.4444, "latitude": 30.3285, "description": "Arheološki lokalitet poznat po kamenim strukturama."},
+    {"name": "Statue of Liberty", "longitude": -74.0445, "latitude": 40.6892, "description": "Simbol slobode u luci New Yorka."},
+    {"name": "Serengeti National Park", "longitude": 34.9206, "latitude": -2.1540, "description": "Nacionalni park poznat po migraciji divljih životinja."},
+    {"name": "Sydney Opera House", "longitude": 151.2140, "latitude": -33.8568, "description": "Ikonična operska kuća u Sidneju."},
+    {"name": "Angkor Wat", "longitude": 103.8567, "latitude": 13.4125, "description": "Veliki hramski kompleks u Kambodži."},
+    {"name": "Yellowstone National Park", "longitude": -110.5885, "latitude": 44.4279, "description": "Prvi nacionalni park na svetu."},
+    {"name": "Acropolis", "longitude": 23.7263, "latitude": 37.9715, "description": "Stari grad na vrhu brda u Atini."},
+    {"name": "Vatican City", "longitude": 12.4523, "latitude": 41.9022, "description": "Nezavisna država unutar Rima, dom Papina."},
+    {"name": "Mount Everest", "longitude": 86.9250, "latitude": 27.9881, "description": "Najviša planina na svetu."},
+    {"name": "Amazon Rainforest", "longitude": -62.8460, "latitude": -3.4653, "description": "Najveća prašuma na svetu."},
+    {"name": "Stonehenge", "longitude": -1.8262, "latitude": 51.1789, "description": "Misteriozne kamene strukture u Engleskoj."},
+    {"name": "Neuschwanstein Castle", "longitude": 10.7498, "latitude": 47.5576, "description": "Romantični dvorac izgrađen u 19. veku."},
+    {"name": "Kyoto", "longitude": 135.7681, "latitude": 35.0116, "description": "Tradicionalni grad sa brojnim hramovima i baštama."},
+]
+
+    queries = []
+
+    for attraction in attractions:
+        unique_id = str(uuid.uuid4())
+        family_friendly = random.choice([True, False])   
+        parking = random.choice([True, False])           
+        duration_of_visit = {
+        "hour": random.randint(0, 5),
+        "minute": random.randint(0, 59),
+        "second": random.randint(0, 59),
+        "nanosecond": 0
+    }
+
+        query = f""" MATCH(a:Attraction) WHERE a.name='{attraction['name']}' DELETE a """
+        queries.append(query)
+
+    for query in queries:
+        db.execute(query)
+        
+def dodavanjeHashTagaoNaBrzinu():
+    hashtags = [
+    "TouristSpot",
+    "BucketList",
+    "AdventureAwaits",
+    "DiscoverEarth",
+    "MustSeePlaces",
+    "WorldExplorer",
+    "CulturalHeritage",
+    "NatureEscape",
+    "Landmarks",
+    "TravelDreams",
+    "BeautifulPlaces",
+    "GlobalTourism",
+    "HistoricSites",
+    "NaturalWonders",
+    "TourismAdventure",
+    "Sightseeing",
+    "JourneyOfDiscovery"]
+    for hashtag in hashtags:
+        unique_id = str(uuid.uuid4())
+        query = f"""
+    CREATE (:Hashtag {{
+        id: '{unique_id}',
+        name: '{hashtag}'
+    }});
+    """
+        db.execute(query)
+        
+def dodavanjeAktivnostiNaBriznu():
+    general_activities = [
+    "Zabeležavanje trenutaka fotografijama",
+    "Praktikovanje joge",
+    "Isprobavanje internacionalnih recepata",
+    "Slušanje podkasta ili muzike",
+    "Vežbanje na otvorenom",
+    "Meditacija radi opuštanja",
+    "Piknik u prirodi",
+    "Učestvovanje u uređenju zajedničkog vrta",
+    "Igranje društvenih igara",
+    "Planinarenje",
+    "Kampovanje",
+    "Biciklizam",
+    "Planinarenje po prirodnim rezervatima",
+    "Ribolov",
+    "Kajak/kanu vožnja",
+    "Penjanje na stene",
+    "Picigin na plaži",
+    "Vrtlarenje",
+    "Orijentiring",
+    "Frisbee golf",
+    "Plivanje",]
+
+    for activity in general_activities:
+        unique_id = str(uuid.uuid4())
+        query = f"""
+        CREATE (:Activity {{
+            id: '{unique_id}',
+            name: '{activity}'
+        }});
+        """
+        db.execute(query)
+           
+def dodavanjeHasHastagNaBriznu():
+    
+    dictionery={
+        "Taj Mahal":["CulturalHeritage","Landmarks"],
+        "Machu Picchu":["Istorija","DiscoverEarth","HistoricSites","JourneyOfDiscovery"],
+        "Eiffel Tower":["Bucket List","MustSeePlaces","TravelDreams","GlobalTourism","Landmarks"],
+        "Grand Canyon" :["Priroda","NatureEscape","Sightseeing"],
+        "Great Barrier Reef" :["Priroda", "DiscoverEarth","MustSeePlaces","WorldExplorer","NatureEscape", "BeautifulPlaces","GlobalTourism","NaturalWonders","TourismAdventure","Sightseeing"],
+        "Colosseum" :["HistoricSites","Landmarks","Sightseeing","CulturalHeritage","TravelDreams","MustSeePlaces","GlobalTourism","AdventureAwaits","JourneyOfDiscovery"],
+        "Petra" :["Priroda","HistoricSites","Landmarks","Sightseeing","CulturalHeritage","TravelDreams","MustSeePlaces","GlobalTourism","AdventureAwaits","JourneyOfDiscovery"],
+        "Statue of Liberty":["Landmarks","Spomenik","TouristSpot","MustSeePlaces"],
+        "Serengeti National Park" :["Park","Priroda","AdventureAwaits","JourneyOfDiscover","NatureEscape"],
+        "Sydney Opera House":["Zabava","Nocni zivot","BeautifulPlaces","GlobalTourism"],
+        "Angkor Wat" :["Istorija","DiscoverEarth","HistoricSites","JourneyOfDiscovery","Priroda","HistoricSites","Landmarks","Sightseeing","CulturalHeritage","TravelDreams","MustSeePlaces"],
+        "Yellowstone National Park":["Park","Priroda","AdventureAwaits","JourneyOfDiscover", "DiscoverEarth","MustSeePlaces","WorldExplorer","NatureEscape"],
+        "Acropolis" :["Istorija","DiscoverEarth","HistoricSites","JourneyOfDiscovery","Landmarks","Sightseeing","CulturalHeritage"],
+        "Vatican City" :["Istorija","DiscoverEarth","HistoricSites","JourneyOfDiscovery","Landmarks","Sightseeing","CulturalHeritage"],
+        "Mount Everest" : ["Priroda","DiscoverEarth","JourneyOfDiscovery","NatureEscape"],
+        "Amazon Rainforest": ["Priroda","DiscoverEarth","JourneyOfDiscovery","NatureEscape"],
+        "Stonehenge": ["Landmarks","HistoricSites","Istorija","CulturalHeritage","AdventureAwaits","JourneyOfDiscovery"],
+        "Neuschwanstein Castle": ["Dvorac","Istorija","CulturalHeritage","HistoricSites"],
+        "Kyoto": ["Zabava","HistoricSites","JourneyOfDiscovery","MustSeePlaces","WorldExplorer"]
+    }
+    queries=[]
+    for attraction in dictionery:
+        for hashtag in dictionery[attraction]:
+            query=f"""     
+            MATCH (a:Attraction {{name: '{attraction}'}}), (h:Hashtag {{name: '{hashtag}'}})
+            MERGE (a)-[:HAS_HASHTAG]->(h)
+            """
+            queries.append(query)
+            
+    
+    for query in queries:
+        db.execute(query)
+
