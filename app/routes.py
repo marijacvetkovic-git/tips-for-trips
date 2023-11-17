@@ -1,5 +1,6 @@
 
 from ast import List
+from collections import OrderedDict
 import datetime
 import random
 import uuid
@@ -8,7 +9,7 @@ from flask import render_template,flash,redirect, url_for
 from app import app , bcrypt, db
 from app.forms import AddActivityForm, AddCityForm, AddHasActivityForm, AddHasHashForm, AddHashtagForm, AddVisitedForm, LogInForm, RegistrationForm,AddAttractionForm
 from app.models import Activity, Attraction, City, HasActivity, HasHashtag, Hashtag, User, Visited
-from gqlalchemy.query_builders.memgraph_query_builder import Operator
+from gqlalchemy.query_builders.memgraph_query_builder import Operator,Order
 from gqlalchemy import match
 from flask_login import login_user
 import pandas as pd
@@ -179,7 +180,7 @@ def createRelationship_VISITED():
 # K-means clustering
 
 
-def proba():
+def kMeansClustering():
     
     hasHashtag=(
           match()
@@ -189,13 +190,10 @@ def proba():
           .return_(results=["a.id","r","h.id"])
           .execute()
           )
-    
     relationships=list(hasHashtag)
     dictioneryOfAttractionHashtags=dict()
     
     for item in relationships:
-        # attraction:Attraction=item["a.id"]
-        # hashtag:Hashtag=item["h"]
         idOfAttraction= item["a.id"]
         idOfHashTag=item["h.id"]
         
@@ -231,19 +229,79 @@ def proba():
         wcss.append(kmeans.inertia_)
         distortions.append(sum(py.min(cdist(x, kmeans.cluster_centers_, 'euclidean'), axis=1)) / x.shape[0])
 
-# Pronalaženje tačke gde se promena u inerciji usporava (elbow point)
     diff = py.diff(distortions, 2)
     elbow_point = py.argmax(diff) + 2
+    #TODO: MOZDA DA SE PROMENI NACIN NALAZENJA ELBOW_POINTA
+    
     kmeansmodel=KMeans(n_clusters=elbow_point,init='k-means++',random_state=0)
     y_kmeans= kmeansmodel.fit_predict(x)
-    print(y_kmeans)
-    plt.plot(range(1,20),wcss)
-    plt.title("The elbow method")
-    plt.xlabel("Number of clusters")
-    plt.ylabel("WCSS values")
-    plt.show()
     
-proba()
+    dictioneryAttractionIdCluster={}
+    i=0
+    for item in dictioneryOfAttractionVector:
+        dictioneryAttractionIdCluster[item]=y_kmeans[i]
+        i+=1
+    return (dictioneryAttractionIdCluster,dictioneryOfAttractionVector)
+    
+def recommendByUsingkMeansClustering():
+    (dictioneryAttractionIdCluster,dictioneryOfAttractionVector) = kMeansClustering()
+    userId="9f130ecc-ab78-4d07-964a-1a38bc131675"
+    query=f"""MATCH (u:User)-[r:VISITED]->(a:Attraction) WHERE u.id={userId} return u,r,a"""
+    
+    attractionsRatedWith45=(
+        match()
+        .node(labels="User",variable="u")
+        .to(relationship_type="VISITED",variable="r")
+        .node(labels="Attraction",variable="a")
+        .where(item="u.id",operator=Operator.EQUAL,literal=userId)
+        .and_where(item="r.rate",operator=Operator.GREATER_THAN,literal=3)
+        .return_(results=["a.id"])
+        .order_by(properties=("r.rate",Order.DESC))
+        .execute()
+        )
+    
+    listOfattractionsRatedWith45=list(attractionsRatedWith45)
+    recommendationlist=[]
+    pr=[]
+    recommendationlistFinal=[]
+    for item in listOfattractionsRatedWith45:
+        pr.append(item["a.id"])
+        rezultat = [id for id, vrednost in dictioneryAttractionIdCluster.items() if vrednost == dictioneryAttractionIdCluster[item["a.id"]] and id!=item["a.id"]]
+        recommendationlist.extend(element for element in rezultat if element not in recommendationlist )
+    recommendationlistFinal = [element for element in recommendationlist if element not in pr]
+    r=recommendationlistFinal[:5]
+    query=f""" MATCH (a:Attraction) where a.id IN {r} RETURN a """
+    recommend=db.execute_and_fetch(query)
+    listOfAttractions:List[Attraction]=[]
+    for item in list(recommend):
+        listOfAttractions.append(item["a"])
+        
+        
+    print(listOfAttractions)
+          
+    
+
+
+        
+        
+    
+     
+    
+recommendByUsingkMeansClustering() 
+    
+    
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
 #dodavanjeAtrakcijaNaBrzinu ne radi zbog glupog vremena za durationOfVisit
 def dodavanjeAtrakcijaNaBrzinu():
     attractions = [
@@ -385,3 +443,28 @@ def dodavanjeHasHastagNaBriznu():
     for query in queries:
         db.execute(query)
 
+def dodavanjeVisited():
+    dictionery={
+        
+        'maruuja_c'	
+        'ana_c'
+        'peca_cvetkovic'
+	    'stejsaa'
+        'kata'	
+        'bazlooka'
+        'mixzzz'	
+        'tqic'
+        'savov'
+        'jeca'
+        'bici'	
+        'mikica'
+        'pistac'
+        'daca'
+        'acko_nikolic'
+        'isa00'
+        'micika00'	
+        'kacica00'
+        'ema_dj'
+        'mara_trajkovic'
+        'jojaa'
+    }
