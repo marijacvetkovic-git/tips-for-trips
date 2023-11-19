@@ -9,6 +9,7 @@ from gqlalchemy.query_builders.memgraph_query_builder import Operator
 from app.models import Activity, Attraction, Hashtag
 
 class RegistrationForm(FlaskForm):
+    #TODO: DODAJ PROVERU ZA LONGITUDU I LATITUDU..mada to ce se unese preko fronta
           
     username=StringField('Username', validators=[DataRequired(),Length(min=2,max=50)])
     email= StringField('Email', validators=[DataRequired(), Email()] )
@@ -90,7 +91,6 @@ class AddHashtagForm(FlaskForm):
         if listOfhashtags:
             raise ValidationError('Hashtag with that name already exists !')
   
-
 class AddActivityForm(FlaskForm):
     name=StringField('Name', validators=[DataRequired()])
     submit = SubmitField('Add')

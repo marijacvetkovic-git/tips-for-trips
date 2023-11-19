@@ -275,19 +275,65 @@ def recommendByUsingkMeansClustering():
     listOfAttractions:List[Attraction]=[]
     for item in list(recommend):
         listOfAttractions.append(item["a"])
-        
-        
     print(listOfAttractions)
           
+    #TODO:COLD START PROBLEM TREBA DA SE RESI I DA LI TREBA JOS SLICNOST PO AKTIVNOSTIMA I K DA LI TREBA DA SE MENJA
+
+def nearYouRecommendation():
+    usersId="9f130ecc-ab78-4d07-964a-1a38bc131675"
+    latitudeAndLongitudeOfTheUser=(
+        match()
+        .node(labels="User",variable="u")
+        .where(item="u.id",operator=Operator.EQUAL,literal=usersId)
+        .return_(["u.longitude","u.latitude"])
+        .execute()
+    )
+  
+    lista=list(latitudeAndLongitudeOfTheUser)
+    usersLongitude=lista[0]["u.longitude"]
+    usersLatitude=lista[0]["u.latitude"]
     
+    
+    query=f""" 
+MATCH (a:Attraction)
+WITH a,
+    6371 * 2 * atan2(
+        sqrt(
+            sin((a.latitude - {usersLatitude}) * 3.14 / 360) * 
+            sin((a.latitude - {usersLatitude}) * 3.14 / 360) +
+            cos({usersLatitude} * 3.14 / 180) * 
+            cos(a.latitude * 3.14 / 180) * 
+            sin((a.longitude - {usersLongitude}) * 3.14 / 360) * 
+            sin((a.longitude - {usersLongitude}) * 3.14 / 360)
+        ),
+        sqrt(
+            1 - sin((a.latitude - {usersLatitude}) * 3.14 / 360) * 
+            sin((a.latitude - {usersLatitude}) * 3.14 / 360) +
+            cos({usersLatitude} * 3.14 / 180) * 
+            cos(a.latitude * 3.14 / 180) * 
+            sin((a.longitude - {usersLongitude}) * 3.14 / 360) * 
+            sin((a.longitude - {usersLongitude}) * 3.14 / 360)
+        )
+    ) AS udaljenost
+RETURN a, udaljenost
+ORDER BY udaljenost
+LIMIT 10;
+ """
+          
+    fetchNearestAttractions=db.execute_and_fetch(query)
+    
+    listOfNearestAttractions=[]
+    listaa=list(fetchNearestAttractions)
+    print(listaa)
+    for item in listaa:
+        listOfNearestAttractions.append(item["a"])
+    print(listOfNearestAttractions)
 
-
-        
+    
         
     
      
     
-recommendByUsingkMeansClustering() 
     
     
     
