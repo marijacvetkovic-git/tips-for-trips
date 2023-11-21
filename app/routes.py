@@ -7,8 +7,8 @@ import uuid
 from click import DateTime
 from flask import render_template,flash,redirect, url_for
 from app import app , bcrypt, db
-from app.forms import AddActivityForm, AddCityForm, AddHasActivityForm, AddHasHashForm, AddHashtagForm, AddVisitedForm, LogInForm, RegistrationForm,AddAttractionForm
-from app.models import Activity, Attraction, City, HasActivity, HasHashtag, Hashtag, User, Visited
+from app.forms import AddActivityForm, AddCityForm, AddHasActivityForm, AddHasHashForm, AddHashtagForm, AddVisitedForm, AddWantsToSeeForm, LogInForm, RegistrationForm,AddAttractionForm
+from app.models import Activity, Attraction, City, HasActivity, HasHashtag, Hashtag, User, Visited, WantsToSee
 from gqlalchemy.query_builders.memgraph_query_builder import Operator,Order
 from gqlalchemy import match
 from flask_login import login_user
@@ -176,11 +176,23 @@ def createRelationship_VISITED():
     
     return render_template('addVisited.html', title='Add has hastag', form=form)  
 
+
+@app.route("/createRelationship_WANTS_TO_SEE",methods=['GET','POST'])
+def createRelationship_WANTS_TO_SEE():
+    form = AddWantsToSeeForm()
+    if form.validate_on_submit():
+        WantsToSee(_start_node_id=form.tupleForResult[0],_end_node_id=form.tupleForResult[1]).save(db)
+
+        flash(f'Your relationship is added!','success')
+        return redirect(url_for('home'))
+    
+    
+    return render_template('addWantsToSee.html', title='Add has hastag', form=form)
 # DEO ZA RECOMMENDATION SYSTEM
 # K-means clustering
 
 
-def kMeansClustering():
+def kMeansClustering(userId):
     
     hasHashtag=(
           match()
@@ -217,9 +229,23 @@ def kMeansClustering():
     dictioneryOfAttractionVector=dict()
     for attraction in dictioneryOfAttractionHashtags:
         dictioneryOfAttractionVector[attraction]=[1 if hashtag in dictioneryOfAttractionHashtags[attraction] else 0 for hashtag in listOfHashtags]
+    userWantsToSee=(
+            match()
+            .node(labels="User",variable="u")
+            .to(relationship_type="WANTS_TO_SEE",variable="r")
+            .node(labels="Hashtag",variable="h")
+            .where(item="u.id",operator=Operator.EQUAL,literal=userId)
+            .return_(results=["h.id"])
+            .execute()
+    )
+    listOfWantsToSee=[]
+    for item in list(userWantsToSee):
+        listOfWantsToSee.append(item["h.id"])
         
-    
-    x=py.array(list(dictioneryOfAttractionVector.values()))
+    userWantsToSee=[1 if hashtag in listOfWantsToSee else 0 for hashtag in listOfHashtags]
+    vectors=list(dictioneryOfAttractionVector.values())
+    vectors.append(userWantsToSee)
+    x=py.array(vectors)
     print(x)
     wcss=[]
     distortions=[]
@@ -241,42 +267,30 @@ def kMeansClustering():
     for item in dictioneryOfAttractionVector:
         dictioneryAttractionIdCluster[item]=y_kmeans[i]
         i+=1
-    return (dictioneryAttractionIdCluster,dictioneryOfAttractionVector)
+    return (dictioneryAttractionIdCluster,y_kmeans[len(y_kmeans)-1])
     
 def recommendByUsingkMeansClustering():
-    (dictioneryAttractionIdCluster,dictioneryOfAttractionVector) = kMeansClustering()
     userId="9f130ecc-ab78-4d07-964a-1a38bc131675"
-    query=f"""MATCH (u:User)-[r:VISITED]->(a:Attraction) WHERE u.id={userId} return u,r,a"""
+
+    (dictioneryAttractionIdCluster,clusterForUser) = kMeansClustering(userId)
+    recommendAttractionId=[]
+    for item in dictioneryAttractionIdCluster:
+        if(dictioneryAttractionIdCluster[item]==clusterForUser):
+            recommendAttractionId.append(item)
+    query=f"""MATCH (a:Attraction) WHERE a.id IN {recommendAttractionId} RETURN a"""
+    recommendAttraction=db.execute_and_fetch(query)
+    recommendAttractionList:List(Attraction)=[]
+    p=list(recommendAttraction)
+    for item in p:
+        recommendAttractionList.append(item["a"])
+    print(recommendAttractionList)
     
-    attractionsRatedWith45=(
-        match()
-        .node(labels="User",variable="u")
-        .to(relationship_type="VISITED",variable="r")
-        .node(labels="Attraction",variable="a")
-        .where(item="u.id",operator=Operator.EQUAL,literal=userId)
-        .and_where(item="r.rate",operator=Operator.GREATER_THAN,literal=3)
-        .return_(results=["a.id"])
-        .order_by(properties=("r.rate",Order.DESC))
-        .execute()
-        )
+recommendByUsingkMeansClustering()
+            
+            
+   
     
-    listOfattractionsRatedWith45=list(attractionsRatedWith45)
-    recommendationlist=[]
-    pr=[]
-    recommendationlistFinal=[]
-    for item in listOfattractionsRatedWith45:
-        pr.append(item["a.id"])
-        rezultat = [id for id, vrednost in dictioneryAttractionIdCluster.items() if vrednost == dictioneryAttractionIdCluster[item["a.id"]] and id!=item["a.id"]]
-        recommendationlist.extend(element for element in rezultat if element not in recommendationlist )
-    recommendationlistFinal = [element for element in recommendationlist if element not in pr]
-    r=recommendationlistFinal[:5]
-    query=f""" MATCH (a:Attraction) where a.id IN {r} RETURN a """
-    recommend=db.execute_and_fetch(query)
-    listOfAttractions:List[Attraction]=[]
-    for item in list(recommend):
-        listOfAttractions.append(item["a"])
-    print(listOfAttractions)
-          
+ 
     #TODO:COLD START PROBLEM TREBA DA SE RESI I DA LI TREBA JOS SLICNOST PO AKTIVNOSTIMA I K DA LI TREBA DA SE MENJA
 
 def nearYouRecommendation():
@@ -329,7 +343,7 @@ LIMIT 10;
         listOfNearestAttractions.append(item["a"])
     print(listOfNearestAttractions)
 
-    
+kMeansClustering()  
         
     
      

@@ -271,4 +271,52 @@ class AddVisitedForm(FlaskForm):
         if listOfvisits:
             raise ValidationError('User with specific id already visited attraction with specific id !')
         form.tupleForResult=(idOfUser,idOfAttraction)
+  
+class AddWantsToSeeForm(FlaskForm):
+    idOfUser=StringField("Id of user",validators=[DataRequired()])
+    idOfHashtag=StringField("Id of hashtag",validators=[DataRequired()])
+    submit = SubmitField('Add')
+    tupleForResult=("","")
+    
+    def validate_idOfUser(form,nzm):
+        users=(
+            match()
+            .node(labels="User",variable="user")
+            .where(item="user.id",operator=Operator.EQUAL,literal=form.idOfUser.data)
+            .return_("user")
+            .execute()    
+        )
+        listOfUsers=list(users)
+        if not listOfUsers:
+            raise ValidationError('User with specific id does not exist!')
+        user:Attraction =listOfUsers[0]["user"]
+        idOfUser=user._id
+       
+        hashtags=(
+            match()
+            .node(labels="Hashtag",variable="hashtag")
+            .where(item="hashtag.id",operator=Operator.EQUAL,literal=form.idOfHashtag.data)
+            .return_("hashtag")
+            .execute()    
+        )
+        listOfhashtags=list(hashtags)
+        if not listOfhashtags:
+            raise ValidationError('Hashtag with specific id does not exist!')
+        hashtag:Hashtag =listOfhashtags[0]["hashtag"]
+        idOfHashtag=hashtag._id
         
+        
+        wantsToSee=(
+            match()
+            .node(labels="User",variable="user",id=form.idOfUser.data)
+            .to(relationship_type="WANTS_TO_SEE")
+            .node(labels="Hashtag",variable="hashtag",id=form.idOfHashtag.data)
+            .return_(results=["user","hashtag"])
+            .execute()
+        )
+        listOfwantsToSee=list(wantsToSee)
+        if listOfwantsToSee:
+            raise ValidationError('User with specific id already has hastag with specific id !')
+        form.tupleForResult=(idOfUser,idOfHashtag)
+            
+          

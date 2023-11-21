@@ -54,9 +54,9 @@ class City(Node):
 class Likes(Relationship,type="LIKES"):
     dateAndTime:datetime = Field(exists=True, db=db)
     
-class Visited(Relationship,type="VISITED"):
-    dateAndTime:datetime = Field(exists=True, db=db)
-    # TODO: Da li da se pamti rate ovde? ili da napravim klasu komentar i rate
+# class Visited(Relationship,type="VISITED"):
+#     dateAndTime:datetime = Field(exists=True, db=db)
+#     # TODO: Da li da se pamti rate ovde? ili da napravim klasu komentar i rate
 
 class HasActivity(Relationship,type="HAS_ACTIVITY"):
     durationOfActivity:time=Field(exists=True,db=db)
@@ -71,3 +71,6 @@ class HasHashtag(Relationship,type="HAS_HASHTAG"):
 class Visited(Relationship, type =" VISITED"):
     rate:int=Field(exists=True,db=db)
     dateAndTime:datetime = Field(exists=True, db=db)
+    
+class WantsToSee(Relationship, type="WANTS_TO_SEE"):
+    pass

@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="content-section">
+        <form method="POST" action="">
+            {{form.hidden_tag()}}
+            <fieldset class ="form-group">
+                <legend  class="border-bottom mb-4">Add an relationship HAS_HASHTAG </legend>
+                <div class="form-group">
+                    {{ form.idOfUser.label(class="form-control-label") }}
+
+                    {% if form.idOfUser.errors %}
+                        {{ form.idOfUser(class="form-control form-control-lg is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.idOfUser.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.idOfUser(class="form-control form-control-lg") }}
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    {{ form.idOfHashtag.label(class="form-control-label") }}
+
+                    {% if form.idOfHashtag.errors %}
+                        {{ form.idOfHashtag(class="form-control form-control-lg is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.idOfHashtag.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.idOfHashtag(class="form-control form-control-lg") }}
+                    {% endif %}
+                </div>
+            </fieldset>
+            <div class="form-group">
+                {{ form.submit(class="btn btn-outline-info") }}
+            </div>
+        </form>
+    </div>
+
+    
+
+    
+{% endblock content %}
