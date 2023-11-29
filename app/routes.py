@@ -192,6 +192,30 @@ def createRelationship_WANTS_TO_SEE():
 # K-means clustering
 
 
+def newUsercoldStartRecommendation(userId):
+    #TODO: Poziva se prilikom registracije korisnika
+    query=f""" MATCH (u:User)-[:WANTS_TO_SEE]->(h:Hashtag)<-[:HAS_HASHTAG]-(a:Attraction) WHERE u.id="{userId}"
+    WITH a
+    OPTIONAL MATCH (a)<-[r:VISITED]-(:User)
+    WITH a, COALESCE(COLLECT(r.rate), [0]) AS ratings
+    WITH a, REDUCE(s = 0, rating IN ratings | s + rating) AS sumRatings, SIZE(ratings) AS numRatings
+    WITH a, 
+        CASE WHEN numRatings > 0 THEN TOFLOAT(sumRatings) / TOFLOAT(numRatings) ELSE 0 END AS averageRating
+    RETURN a.id
+    ORDER BY averageRating DESC
+    LIMIT 5 """
+    result=list(db.execute_and_fetch(query))
+    listOfAttributes = [item["a.id"] for item in result]
+    query=f""" MATCH (u:User) WHERE u.id='{userId}'
+                MATCH(a:Attraction) WHERE a.id IN {listOfAttributes}
+                MERGE(a)-[r:RECOMMENDED_FOR]->(u) 
+        """
+    db.execute(query)
+    
+    
+    
+    
+
 def kMeansClustering(userId):
     
     hasHashtag=(
@@ -254,7 +278,7 @@ def kMeansClustering(userId):
         print(kmeans.fit(x))
         wcss.append(kmeans.inertia_)
         distortions.append(sum(py.min(cdist(x, kmeans.cluster_centers_, 'euclidean'), axis=1)) / x.shape[0])
-
+# da li umesto euclidean moze kosinusna da se ukljuci za k-means
     diff = py.diff(distortions, 2)
     elbow_point = py.argmax(diff) + 2
     #TODO: MOZDA DA SE PROMENI NACIN NALAZENJA ELBOW_POINTA
@@ -285,13 +309,6 @@ def recommendByUsingkMeansClustering():
         recommendAttractionList.append(item["a"])
     print(recommendAttractionList)
     
-recommendByUsingkMeansClustering()
-            
-            
-   
-    
- 
-    #TODO:COLD START PROBLEM TREBA DA SE RESI I DA LI TREBA JOS SLICNOST PO AKTIVNOSTIMA I K DA LI TREBA DA SE MENJA
 
 def nearYouRecommendation():
     usersId="9f130ecc-ab78-4d07-964a-1a38bc131675"
@@ -343,7 +360,6 @@ LIMIT 10;
         listOfNearestAttractions.append(item["a"])
     print(listOfNearestAttractions)
 
-kMeansClustering()  
         
     
      

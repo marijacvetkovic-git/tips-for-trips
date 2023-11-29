@@ -74,3 +74,6 @@ class Visited(Relationship, type =" VISITED"):
     
 class WantsToSee(Relationship, type="WANTS_TO_SEE"):
     pass
+
+class RecommendedFor(Relationship,type="RECOMMENDED_FOR"):
+    pass
