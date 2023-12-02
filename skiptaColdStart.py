@@ -30,18 +30,17 @@ def recommendationColdStart():
         lista=user_attractions_dict[username]
         query=f"""
         MATCH (:Attraction)-[r:RECOMMENDED_FOR]->(u:User) WHERE u.username="{username}"
-        DELETE r
-        WITH u
+        DELETE r """
+        db.execute(query)
+        query=f"""
+        MATCH (u:User) WHERE u.username="{username}"
         MATCH (a:Attraction) WHERE a.id IN {lista}
         MERGE (a)-[r1:RECOMMENDED_FOR]->(u)
         RETURN a, u, r1;
-
         """
-        queries.append(query)
+        db.execute(query)
 
-    for query in queries:
-        result=db.execute_and_fetch(query)
+
     return
 
 recommendationColdStart()
-#TODO: Da li samo u atrakciji da cuvam prosecnu ocenu umesto da racunma ovo svaki put...ili da ostane ovako pa da uzmem pagerank da radim gde ce tezina grane rate da bude
