@@ -82,38 +82,45 @@ def recommendationKMeansClustering():
     while len(kljucevi)<5 and i<len(usersAttraction):
             cluster=dictioneryOfAttractionVector[usersAttraction[i]][-1]
             if cluster not in recommendedClusters:
-                kljucevi.extend([kljuc for kljuc, vektor in dictioneryOfAttractionVector.items() if vektor[-1] == cluster])
+                kljucevi.extend([kljuc for kljuc, vektor in dictioneryOfAttractionVector.items() if vektor[-1] == cluster and kljuc not in usersAttraction])
                 recommendedClusters.append(cluster)
             i+=1
     if len(kljucevi)<5 :
         remaining=5-len(kljucevi)
         query=f""" MATCH (u:User)-[:WANTS_TO_SEE]->(h:Hashtag)<-[:HAS_HASHTAG]-(a:Attraction) WHERE u.id='{userId}'AND a.id NOT IN {kljucevi} AND a.id NOT IN {usersAttraction}
-        WITH a,u
-        OPTIONAL MATCH (a)<-[r:VISITED]-(:User)
-        WITH u,a, COALESCE(COLLECT(r.rate), [0]) AS ratings
-        WITH u,a, REDUCE(s = 0, rating IN ratings | s + rating) AS sumRatings, SIZE(ratings) AS numRatings
-        WITH u,a, 
-        CASE WHEN numRatings > 0 THEN TOFLOAT(sumRatings) / TOFLOAT(numRatings) ELSE 0 END AS averageRating
-        WITH u.username AS username, a AS attraction, averageRating
+        WITH u.username AS username, a AS attraction, a.averageRate AS averageRating
         ORDER BY username, averageRating DESC
-        WITH username, COLLECT({{attractionId: attraction.id, averageRating: averageRating}})[..{remaining}] AS topAttractions
+        WITH username, COLLECT({{attractionId: attraction.id, averageRating: averageRating}})[..5] AS topAttractions
         UNWIND topAttractions AS attraction
-        RETURN attraction.attractionId"""
+        RETURN username, attraction.attractionId, attraction.averageRating;"""
+        
         result=list(db.execute_and_fetch(query))
         kljucevi.append([item["attraction.attractionId"] for item in result])
 
     query=f""" MATCH (a:Attraction) WHERE a.id IN {kljucevi}
-    WITH a
-    OPTIONAL MATCH (a)<-[r:VISITED]-(:User)
-    WITH a, COALESCE(COLLECT(r.rate), [0]) AS ratings
-    WITH a, REDUCE(s = 0, rating IN ratings | s + rating) AS sumRatings, SIZE(ratings) AS numRatings
-    WITH a, 
-        CASE WHEN numRatings > 0 THEN TOFLOAT(sumRatings) / TOFLOAT(numRatings) ELSE 0 END AS averageRating
-    WITH  a AS attraction, averageRating
-    return attraction,averageRating
-    ORDER BY  averageRating DESC
+    RETURN a.id
+    ORDER BY a.averageRating DESC
     LIMIT 5
     """
+    result=list(db.execute_and_fetch(query))
+    recommendList=[item["a.id"] for item in result]
+    
+    
+    query = f"""
+    MATCH (:Attraction)-[r:RECOMMENDED_FOR]->(u:User) WHERE u.id='{userId}' 
+    DELETE r
+    """
+    db.execute(query)
+    
+    query= f"""MATCH (u:User {{id: '{userId}'}})
+        WITH u
+        UNWIND {recommendList} AS attractionId
+        MATCH (a:Attraction {{id: attractionId}})
+        MERGE (a)-[:RECOMMENDED_FOR]->(u)
+        RETURN a.name, u.username;
+        """
+    db.execute(query)
+
 
 
 

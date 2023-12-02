@@ -169,11 +169,11 @@ def createRelationship_VISITED():
     form = AddVisitedForm()
     if form.validate_on_submit():
         Visited(_start_node_id=form.tupleForResult[0],_end_node_id=form.tupleForResult[1],rate=form.rate.data,dateAndTime=datetime.datetime.now()).save(db)
-        # query=f""" MATCH (a:Attraction)<-[r:VISITED]-() WHERE a.id='{form.idOfAttraction.data}'
-        #            WITH a, AVG(r.rate) AS prosecnaOcena
-        #            SET a.averageRate = prosecnaOcena;
-        #            """
-        # db.execute(query)
+        query=f""" MATCH (a:Attraction)<-[r:VISITED]-() WHERE a.id='{form.idOfAttraction.data}'
+                   WITH a, AVG(r.rate) AS prosecnaOcena
+                   SET a.averageRate = prosecnaOcena;
+                   """
+        db.execute(query)
         flash(f'Your relationship is added!','success')
         return redirect(url_for('home'))
     
@@ -218,14 +218,8 @@ def newUsercoldStartRecommendation(userId):
     
 def recommend(userId):
     query=f""" MATCH (u:User)<-[r:RECOMMENDED_FOR]-(a:Attraction) WHERE u.id="{userId}"
-    WITH a
-    OPTIONAL MATCH (a)<-[r:VISITED]-(:User)
-    WITH a, COALESCE(COLLECT(r.rate), [0]) AS ratings
-    WITH a, REDUCE(s = 0, rating IN ratings | s + rating) AS sumRatings, SIZE(ratings) AS numRatings
-    WITH a, 
-        CASE WHEN numRatings > 0 THEN TOFLOAT(sumRatings) / TOFLOAT(numRatings) ELSE 0 END AS averageRating
     RETURN a
-    ORDER BY averageRating DESC
+    ORDER BY a.averageRate DESC
     """
     result=list(db.execute_and_fetch(query))
     recommendAttractions=[item["a"] for item in result]

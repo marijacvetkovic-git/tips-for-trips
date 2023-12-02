@@ -36,7 +36,7 @@ class Attraction(Node):
     # TODO: Vidi treba li exists true da bude
     durationOfVisit:time=Field(exists=True,db=db)
     parking:bool=Field(exists=True,db=db)
-    # averageRate:int=Field(db=db)
+    averageRate:int=Field(db=db)
 
 class Hashtag(Node):
     id:str= Field(index=True, unique=True, exists=True, db=db)
