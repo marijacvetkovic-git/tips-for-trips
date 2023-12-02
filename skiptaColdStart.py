@@ -51,3 +51,4 @@ def recommendationColdStart():
     return
 
 recommendationColdStart()
+#TODO: Da li samo u atrakciji da cuvam prosecnu ocenu umesto da racunma ovo svaki put...ili da ostane ovako pa da uzmem pagerank da radim gde ce tezina grane rate da bude

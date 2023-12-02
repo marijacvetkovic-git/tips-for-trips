@@ -169,7 +169,11 @@ def createRelationship_VISITED():
     form = AddVisitedForm()
     if form.validate_on_submit():
         Visited(_start_node_id=form.tupleForResult[0],_end_node_id=form.tupleForResult[1],rate=form.rate.data,dateAndTime=datetime.datetime.now()).save(db)
-
+        # query=f""" MATCH (a:Attraction)<-[r:VISITED]-() WHERE a.id='{form.idOfAttraction.data}'
+        #            WITH a, AVG(r.rate) AS prosecnaOcena
+        #            SET a.averageRate = prosecnaOcena;
+        #            """
+        # db.execute(query)
         flash(f'Your relationship is added!','success')
         return redirect(url_for('home'))
     
@@ -212,8 +216,21 @@ def newUsercoldStartRecommendation(userId):
         """
     db.execute(query)
     
-    
-    
+def recommend(userId):
+    query=f""" MATCH (u:User)<-[r:RECOMMENDED_FOR]-(a:Attraction) WHERE u.id="{userId}"
+    WITH a
+    OPTIONAL MATCH (a)<-[r:VISITED]-(:User)
+    WITH a, COALESCE(COLLECT(r.rate), [0]) AS ratings
+    WITH a, REDUCE(s = 0, rating IN ratings | s + rating) AS sumRatings, SIZE(ratings) AS numRatings
+    WITH a, 
+        CASE WHEN numRatings > 0 THEN TOFLOAT(sumRatings) / TOFLOAT(numRatings) ELSE 0 END AS averageRating
+    RETURN a
+    ORDER BY averageRating DESC
+    """
+    result=list(db.execute_and_fetch(query))
+    recommendAttractions=[item["a"] for item in result]
+    return recommendAttractions
+#TODO: Da li samo u atrakciji da cuvam prosecnu ocenu umesto da racunma ovo svaki put...ili da ostane ovako pa da uzmem pagerank da radim gde ce tezina grane rate da bude
     
 
 def kMeansClustering(userId):
@@ -309,7 +326,6 @@ def recommendByUsingkMeansClustering():
         recommendAttractionList.append(item["a"])
     print(recommendAttractionList)
     
-
 def nearYouRecommendation():
     usersId="9f130ecc-ab78-4d07-964a-1a38bc131675"
     latitudeAndLongitudeOfTheUser=(
@@ -360,8 +376,7 @@ LIMIT 10;
         listOfNearestAttractions.append(item["a"])
     print(listOfNearestAttractions)
 
-        
-    
+
      
     
     
