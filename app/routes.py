@@ -224,7 +224,6 @@ def recommend(userId):
     result=list(db.execute_and_fetch(query))
     recommendAttractions=[item["a"] for item in result]
     return recommendAttractions
-#TODO: Da li samo u atrakciji da cuvam prosecnu ocenu umesto da racunma ovo svaki put...ili da ostane ovako pa da uzmem pagerank da radim gde ce tezina grane rate da bude
     
 
 def kMeansClustering(userId):

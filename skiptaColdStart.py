@@ -4,12 +4,13 @@ from gqlalchemy import Memgraph
 def recommendationColdStart():
     db= Memgraph("127.0.0.1", 7687)
     query=f""" MATCH (u:User)-[:WANTS_TO_SEE]->(h:Hashtag)<-[:HAS_HASHTAG]-(a:Attraction)
-    WHERE NOT EXISTS ((u)-[:VISITED]->())
-    WITH u.username AS username, a AS attraction, a.averageRate AS averageRating
-    ORDER BY username, averageRating DESC
-    WITH username, COLLECT({{attractionId: attraction.id, averageRating: averageRating}})[..5] AS topAttractions
-    UNWIND topAttractions AS attraction
-    RETURN username, attraction.attractionId, attraction.averageRating;
+WHERE NOT EXISTS ((u)-[:VISITED]->())
+WITH u.username AS username, a, a.averageRate AS averageRating
+ORDER BY username, averageRating DESC
+WITH username, COLLECT(DISTINCT {{attractionId: a.id, averageRating: averageRating}})[..5] AS topAttractions
+UNWIND topAttractions AS attraction
+RETURN username, attraction.attractionId, attraction.averageRating
+ORDER BY username, attraction.averageRating DESC;
     """
 
 
