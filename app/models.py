@@ -78,3 +78,6 @@ class WantsToSee(Relationship, type="WANTS_TO_SEE"):
 
 class RecommendedFor(Relationship,type="RECOMMENDED_FOR"):
     pass
+
+class HasAttraction(Relationship,type="HAS_ATTRACTION"):
+    pass

@@ -3,12 +3,14 @@ from ast import List
 from collections import OrderedDict
 import datetime
 import random
+import sys
+import time
 import uuid
 from click import DateTime
 from flask import render_template,flash,redirect, url_for
 from app import app , bcrypt, db
-from app.forms import AddActivityForm, AddCityForm, AddHasActivityForm, AddHasHashForm, AddHashtagForm, AddVisitedForm, AddWantsToSeeForm, LogInForm, RegistrationForm,AddAttractionForm
-from app.models import Activity, Attraction, City, HasActivity, HasHashtag, Hashtag, User, Visited, WantsToSee
+from app.forms import AddActivityForm, AddCityForm, AddHasActivityForm, AddHasAttractionForm, AddHasHashForm, AddHashtagForm, AddVisitedForm, AddWantsToSeeForm, LogInForm, RegistrationForm,AddAttractionForm
+from app.models import Activity, Attraction, City, HasActivity, HasAttraction, HasHashtag, Hashtag, User, Visited, WantsToSee
 from gqlalchemy.query_builders.memgraph_query_builder import Operator,Order
 from gqlalchemy import match
 from flask_login import login_user
@@ -192,21 +194,27 @@ def createRelationship_WANTS_TO_SEE():
     
     
     return render_template('addWantsToSee.html', title='Add has hastag', form=form)
+
+
+@app.route("/createRelationship_HAS_ATTRACTION",methods=['GET','POST'])
+def createRelationship_HAS_ATTRACTION():
+    form = AddHasAttractionForm()
+    if form.validate_on_submit():
+        HasAttraction(_start_node_id=form.tupleForResult[0],_end_node_id=form.tupleForResult[1]).save(db)
+
+        flash(f'Your relationship is added!','success')
+        return redirect(url_for('home'))
+    
+    
+    return render_template('addHasAttraction.html', title='Add has hastag', form=form)
 # DEO ZA RECOMMENDATION SYSTEM
 # K-means clustering
-
 
 def newUsercoldStartRecommendation(userId):
     #TODO: Poziva se prilikom registracije korisnika
     query=f""" MATCH (u:User)-[:WANTS_TO_SEE]->(h:Hashtag)<-[:HAS_HASHTAG]-(a:Attraction) WHERE u.id="{userId}"
-    WITH a
-    OPTIONAL MATCH (a)<-[r:VISITED]-(:User)
-    WITH a, COALESCE(COLLECT(r.rate), [0]) AS ratings
-    WITH a, REDUCE(s = 0, rating IN ratings | s + rating) AS sumRatings, SIZE(ratings) AS numRatings
-    WITH a, 
-        CASE WHEN numRatings > 0 THEN TOFLOAT(sumRatings) / TOFLOAT(numRatings) ELSE 0 END AS averageRating
     RETURN a.id
-    ORDER BY averageRating DESC
+    ORDER BY a.averageRate DESC
     LIMIT 5 """
     result=list(db.execute_and_fetch(query))
     listOfAttributes = [item["a.id"] for item in result]
@@ -224,100 +232,6 @@ def recommend(userId):
     result=list(db.execute_and_fetch(query))
     recommendAttractions=[item["a"] for item in result]
     return recommendAttractions
-    
-
-def kMeansClustering(userId):
-    
-    hasHashtag=(
-          match()
-          .node(labels="Attraction",variable="a")
-          .to(relationship_type="HAS_HASHTAG",variable="r")
-          .node(labels="Hashtag",variable="h")
-          .return_(results=["a.id","r","h.id"])
-          .execute()
-          )
-    relationships=list(hasHashtag)
-    dictioneryOfAttractionHashtags=dict()
-    
-    for item in relationships:
-        idOfAttraction= item["a.id"]
-        idOfHashTag=item["h.id"]
-        
-        if idOfAttraction not in dictioneryOfAttractionHashtags:
-            lista:List=[]
-            dictioneryOfAttractionHashtags[idOfAttraction]=lista
-        dictioneryOfAttractionHashtags[idOfAttraction].append(idOfHashTag)
-
-    
-    hashtags=(
-          match()
-          .node(labels="Hashtag",variable="hashtag")
-          .return_()
-          .execute()
-          )
-    
-    listOfHashtags=[]
-    for item in hashtags:
-        listOfHashtags.append(item["hashtag"].id)
-   
-    dictioneryOfAttractionVector=dict()
-    for attraction in dictioneryOfAttractionHashtags:
-        dictioneryOfAttractionVector[attraction]=[1 if hashtag in dictioneryOfAttractionHashtags[attraction] else 0 for hashtag in listOfHashtags]
-    userWantsToSee=(
-            match()
-            .node(labels="User",variable="u")
-            .to(relationship_type="WANTS_TO_SEE",variable="r")
-            .node(labels="Hashtag",variable="h")
-            .where(item="u.id",operator=Operator.EQUAL,literal=userId)
-            .return_(results=["h.id"])
-            .execute()
-    )
-    listOfWantsToSee=[]
-    for item in list(userWantsToSee):
-        listOfWantsToSee.append(item["h.id"])
-        
-    userWantsToSee=[1 if hashtag in listOfWantsToSee else 0 for hashtag in listOfHashtags]
-    vectors=list(dictioneryOfAttractionVector.values())
-    vectors.append(userWantsToSee)
-    x=py.array(vectors)
-    print(x)
-    wcss=[]
-    distortions=[]
-    for i in range(1,20):
-        kmeans=KMeans(n_clusters=i,init='k-means++',random_state=0)
-        print(kmeans.fit(x))
-        wcss.append(kmeans.inertia_)
-        distortions.append(sum(py.min(cdist(x, kmeans.cluster_centers_, 'euclidean'), axis=1)) / x.shape[0])
-# da li umesto euclidean moze kosinusna da se ukljuci za k-means
-    diff = py.diff(distortions, 2)
-    elbow_point = py.argmax(diff) + 2
-    #TODO: MOZDA DA SE PROMENI NACIN NALAZENJA ELBOW_POINTA
-    
-    kmeansmodel=KMeans(n_clusters=elbow_point,init='k-means++',random_state=0)
-    y_kmeans= kmeansmodel.fit_predict(x)
-    
-    dictioneryAttractionIdCluster={}
-    i=0
-    for item in dictioneryOfAttractionVector:
-        dictioneryAttractionIdCluster[item]=y_kmeans[i]
-        i+=1
-    return (dictioneryAttractionIdCluster,y_kmeans[len(y_kmeans)-1])
-    
-def recommendByUsingkMeansClustering():
-    userId="9f130ecc-ab78-4d07-964a-1a38bc131675"
-
-    (dictioneryAttractionIdCluster,clusterForUser) = kMeansClustering(userId)
-    recommendAttractionId=[]
-    for item in dictioneryAttractionIdCluster:
-        if(dictioneryAttractionIdCluster[item]==clusterForUser):
-            recommendAttractionId.append(item)
-    query=f"""MATCH (a:Attraction) WHERE a.id IN {recommendAttractionId} RETURN a"""
-    recommendAttraction=db.execute_and_fetch(query)
-    recommendAttractionList:List(Attraction)=[]
-    p=list(recommendAttraction)
-    for item in p:
-        recommendAttractionList.append(item["a"])
-    print(recommendAttractionList)
     
 def nearYouRecommendation():
     usersId="9f130ecc-ab78-4d07-964a-1a38bc131675"
@@ -369,9 +283,95 @@ LIMIT 10;
         listOfNearestAttractions.append(item["a"])
     print(listOfNearestAttractions)
 
-
-     
+def planTrip():
+    distanceKm=1000000000000000
+    cityName="Nis" 
+    # mora destinacija da se odabere
+    usersLatitude=45
+    usersLongitude=45
+    activities=[]
+    durationH=444444
+    durationM=45
+    durationS=0
+    duration=True
+    familyFiendly=True
+    parking=True
+    # experience=True
+    maxDestinations=4
+    query=""
+    if distanceKm==-1:
+        distanceKm=sys.float_info.max
     
+    whereConditions=[]
+    
+    query+=f"""MATCH (c:City{{name:'{cityName}'}})-[r1:HAS_ATTRACTION]->(a:Attraction)
+    OPTIONAL MATCH (a)-[r2:HAS_ACTIVITY]->(activity:Activity)
+    WHERE size({activities}) = 0 OR (size({activities}) > 0 AND activity.name IN {activities})
+    WITH a, COLLECT(activity) AS activitiesForAttraction,COLLECT(r2) AS rels
+       """
+
+    if familyFiendly:
+        whereConditions.append("a.familyFriendly = true ")
+        
+    if parking:
+        whereConditions.append("a.parking = true ")
+        
+    if whereConditions:
+        query+="WHERE "+" AND ".join(whereConditions)
+        
+    query+= f""" WITH a, activitiesForAttraction,rels,
+     CASE 
+       WHEN size({activities}) > 0 
+       THEN REDUCE(s = 0, x IN activitiesForAttraction | s + CASE WHEN x.name IN {activities} THEN 1 ELSE 0 END)
+       ELSE 0
+     END AS commonActivities
+    WITH a, activitiesForAttraction, commonActivities,rels,
+    
+     REDUCE(s = 0.0, r IN rels | s + COALESCE(toInteger(split(coalesce(toString(r.durationOfActivity), ""), ":")[0])*3600 + toInteger(split(coalesce(toString(r.durationOfActivity), ""), ":")[1])*60 + toInteger(split(coalesce(toString(r.durationOfActivity), ""), ":")[2]), 0.0))+(a.durationOfVisit.hour * 3600 + a.durationOfVisit.minute * 60 + a.durationOfVisit.second) AS totalDuration,
+        6371 * 2 * atan2(
+        sqrt(
+                sin((a.latitude - {usersLatitude}) * 3.14 / 360) * 
+                sin((a.latitude - {usersLatitude}) * 3.14 / 360) +
+                cos({usersLatitude} * 3.14 / 180) * 
+                cos(a.latitude * 3.14 / 180) * 
+                sin((a.longitude - {usersLongitude}) * 3.14 / 360) * 
+                sin((a.longitude - {usersLongitude}) * 3.14 / 360)
+            ),
+        sqrt(
+                1 - sin((a.latitude - {usersLatitude}) * 3.14 / 360) * 
+                sin((a.latitude - {usersLatitude}) * 3.14 / 360) +
+                cos({usersLatitude} * 3.14 / 180) * 
+                cos(a.latitude * 3.14 / 180) * 
+                sin((a.longitude - {usersLongitude}) * 3.14 / 360) * 
+                sin((a.longitude - {usersLongitude}) * 3.14 / 360)
+            )
+        ) AS udaljenost
+        WHERE udaljenost<{distanceKm}"""
+        
+    if(duration):
+        query+= f""" AND totalDuration < ({durationH}* 3600+{durationM}*60+{durationS})
+        """
+    
+    query+=f"""RETURN a,totalDuration,udaljenost,commonActivities
+        ORDER BY udaljenost,commonActivities DESC 
+        """
+    if(maxDestinations>0):
+        query+=f"""LIMIT {maxDestinations} """
+    
+    print(query)
+    p=list(db.execute_and_fetch(query))
+    print(p)
+    
+planTrip()
+    
+    
+    # da su do odredjene udaljenosti od mene
+    # da ima neke od aktivnosti
+    # vremensko trajanje ture
+    # da atrakcije budu za jednu osobu/vise
+    # da li se moze doci kolima
+     
+
     
     
     

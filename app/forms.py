@@ -6,7 +6,7 @@ from app import db
 from gqlalchemy import match
 from gqlalchemy.query_builders.memgraph_query_builder import Operator
 
-from app.models import Activity, Attraction, Hashtag
+from app.models import Activity, Attraction, City, Hashtag
 
 class RegistrationForm(FlaskForm):
     #TODO: DODAJ PROVERU ZA LONGITUDU I LATITUDU..mada to ce se unese preko fronta
@@ -318,5 +318,52 @@ class AddWantsToSeeForm(FlaskForm):
         if listOfwantsToSee:
             raise ValidationError('User with specific id already has hastag with specific id !')
         form.tupleForResult=(idOfUser,idOfHashtag)
+    
+class AddHasAttractionForm(FlaskForm):
+    idOfCity=StringField("Id of city",validators=[DataRequired()])
+    idOfAttraction=StringField("Id of attraction",validators=[DataRequired()])
+    submit = SubmitField('Add')
+    tupleForResult=("","")
+    
+    def validate_idOfCity(form,nzm):
+        cities=(
+            match()
+            .node(labels="City",variable="city")
+            .where(item="city.id",operator=Operator.EQUAL,literal=form.idOfCity.data)
+            .return_("city")
+            .execute()    
+        )
+        listOfCities=list(cities)
+        if not listOfCities:
+            raise ValidationError('City with specific id does not exist!')
+        city:City =listOfCities[0]["city"]
+        idOfCity=city._id
+       
+        attractions=(
+            match()
+            .node(labels="Attraction",variable="attraction")
+            .where(item="attraction.id",operator=Operator.EQUAL,literal=form.idOfAttraction.data)
+            .return_("attraction")
+            .execute()    
+        )
+        listOfattractions=list(attractions)
+        if not listOfattractions:
+            raise ValidationError('Attraction with specific id does not exist!')
+        attraction:Attraction =listOfattractions[0]["attraction"]
+        idOfAttraction=attraction._id
+        
+        
+        hasAttraction=(
+            match()
+            .node(labels="City",variable="city",id=form.idOfCity.data)
+            .to(relationship_type="HAS_ATTRACTION")
+            .node(labels="Attraction",variable="attraction",id=form.idOfAttraction.data)
+            .return_(results=["city","attraction"])
+            .execute()
+        )
+        listOfHasAttraction=list(hasAttraction)
+        if listOfHasAttraction:
+            raise ValidationError('City with specific id already has attraction with specific id !')
+        form.tupleForResult=(idOfCity,idOfAttraction)
             
           
