@@ -362,7 +362,6 @@ def planTrip():
     p=list(db.execute_and_fetch(query))
     print(p)
     
-planTrip()
     
     
     # da su do odredjene udaljenosti od mene
@@ -371,7 +370,8 @@ planTrip()
     # da atrakcije budu za jednu osobu/vise
     # da li se moze doci kolima
      
-
+def serachEngineAll():
+    stringForSearch=f""" """
     
     
     
