@@ -1,14 +1,15 @@
 
 from ast import List
 from collections import OrderedDict
+from contextlib import nullcontext
 import datetime
 import random
 import sys
 import time
 import uuid
 from click import DateTime
-from flask import render_template,flash,redirect, url_for
-from app import app , bcrypt, db
+from flask import jsonify, render_template,flash,redirect, url_for
+from app import app , bcrypt, db ,ma
 from app.forms import AddActivityForm, AddCityForm, AddHasActivityForm, AddHasAttractionForm, AddHasHashForm, AddHashtagForm, AddVisitedForm, AddWantsToSeeForm, LogInForm, RegistrationForm,AddAttractionForm
 from app.models import Activity, Attraction, City, HasActivity, HasAttraction, HasHashtag, Hashtag, User, Visited, WantsToSee
 from gqlalchemy.query_builders.memgraph_query_builder import Operator,Order
@@ -20,6 +21,13 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.cluster import KMeans
 from scipy.spatial.distance import cdist
+from flask_jwt_extended import (
+    JWTManager,
+    create_access_token,
+    create_refresh_token,
+    get_jwt_identity,
+    jwt_required,
+)
 
 
 posts = [
@@ -36,6 +44,15 @@ posts = [
         'date_posted': 'April 21, 2018'
     }
 ]
+
+class AttractionSchema(ma.Schema):
+    class Meta:
+        fields = ('id','name','latitude','longitude','description','familyFriendly','durationOfVisit','parking','averageRate')
+  
+attraction_schema = AttractionSchema()
+attractions_schema = AttractionSchema(many=True)
+  
+
 
 @app.route("/")
 @app.route("/home")
@@ -55,11 +72,15 @@ def register():
             user=User(id=str(uuid.uuid4()),username=form.username.data,password=bcrypt.generate_password_hash(form.password.data).decode('utf-8'),
                      email=form.email.data,dateOfBirth=form.date_of_birth.data,longitude=form.longitude.data,latitude=form.latitude.data)
             user.save(db)
+           
+            # flash(f'Your accound is now created, now you can log in and plan your next trip!','success')
+            return jsonify({"username":user.username,"id":user.id})
+    else :
+        errors = {"errors": form.errors}
+        return jsonify(errors), 400
 
-            flash(f'Your accound is now created, now you can log in and plan your next trip!','success')
-            return redirect(url_for('login'))
         
-    return render_template('register.html', title='Register', form=form)
+   
 
 
 @app.route("/login", methods=['GET', 'POST'])
@@ -82,13 +103,21 @@ def login():
             if not bcrypt.check_password_hash(user.password,form.password.data):
                 flash('Login Unsuccessful. Please check username and password', 'danger')
             else:
-                login_user(user,remember=form.remember.data)
-                flash('You have been logged in!', 'success')
-                return redirect(url_for('home'))
+                access_token = create_access_token(identity=user.username)
+                refresh_token = create_refresh_token(identity=user.username)
+
+                # login_user(user,remember=form.remember.data)
+                # flash('You have been logged in!', 'success')
+                return jsonify(
+                {"access_token": access_token, "refresh_token": refresh_token}
+            )
+                # return redirect(url_for('home'))
         
     return render_template('login.html', title='Login', form=form)
 
 @app.route("/addAttraction",methods=['GET','POST'])
+@jwt_required()
+
 def addAttraction():
     form= AddAttractionForm()
     if form.validate_on_submit():
@@ -102,6 +131,8 @@ def addAttraction():
     return render_template('addAttraction.html', title='Add attraction', form=form)
 
 @app.route("/createHashtag",methods=['GET','POST'])
+@jwt_required()
+
 def createHashtag():
     form = AddHashtagForm()
     if form.validate_on_submit():
@@ -115,6 +146,8 @@ def createHashtag():
     return render_template('addHashtag.html', title='Add hashtag', form=form)
     
 @app.route("/createActivity",methods=['GET','POST'])
+@jwt_required()
+
 def createActivity():
     form = AddActivityForm()
     if form.validate_on_submit():
@@ -128,6 +161,8 @@ def createActivity():
     return render_template('addActivity.html', title='Add activity', form=form)
 
 @app.route("/createCity",methods=['GET','POST'])
+@jwt_required()
+
 def createCity():
     form = AddCityForm()
     if form.validate_on_submit():
@@ -141,6 +176,8 @@ def createCity():
     return render_template('addCity.html', title='Add city', form=form)
 
 @app.route("/createRelationship_HAS_HASHTAG",methods=['GET','POST'])
+@jwt_required()
+
 def createRelationship_HAS_HASHTAG():
     form = AddHasHashForm()
     m=form.validate_on_submit()
@@ -155,6 +192,7 @@ def createRelationship_HAS_HASHTAG():
     return render_template('addHashashtag.html', title='Add has hastag', form=form)
 
 @app.route("/createRelationship_HAS_ACTIVITY",methods=['GET','POST'])
+@jwt_required()
 def createRelationship_HAS_ACTIVITY():
     form = AddHasActivityForm()
     if form.validate_on_submit():
@@ -167,6 +205,7 @@ def createRelationship_HAS_ACTIVITY():
     return render_template('addHasActivity.html', title='Add has hastag', form=form)  
 
 @app.route("/createRelationship_VISITED",methods=['GET','POST'])
+@jwt_required()
 def createRelationship_VISITED():
     form = AddVisitedForm()
     if form.validate_on_submit():
@@ -184,6 +223,7 @@ def createRelationship_VISITED():
 
 
 @app.route("/createRelationship_WANTS_TO_SEE",methods=['GET','POST'])
+@jwt_required()
 def createRelationship_WANTS_TO_SEE():
     form = AddWantsToSeeForm()
     if form.validate_on_submit():
@@ -197,6 +237,7 @@ def createRelationship_WANTS_TO_SEE():
 
 
 @app.route("/createRelationship_HAS_ATTRACTION",methods=['GET','POST'])
+@jwt_required()
 def createRelationship_HAS_ATTRACTION():
     form = AddHasAttractionForm()
     if form.validate_on_submit():
@@ -209,7 +250,7 @@ def createRelationship_HAS_ATTRACTION():
     return render_template('addHasAttraction.html', title='Add has hastag', form=form)
 # DEO ZA RECOMMENDATION SYSTEM
 # K-means clustering
-
+@app.route('/newUsercoldStartRecommendation', methods=['GET']) 
 def newUsercoldStartRecommendation(userId):
     #TODO: Poziva se prilikom registracije korisnika
     query=f""" MATCH (u:User)-[:WANTS_TO_SEE]->(h:Hashtag)<-[:HAS_HASHTAG]-(a:Attraction) WHERE u.id="{userId}"
@@ -223,7 +264,10 @@ def newUsercoldStartRecommendation(userId):
                 MERGE(a)-[r:RECOMMENDED_FOR]->(u) 
         """
     db.execute(query)
-    
+
+
+@app.route('/recommend', methods=['GET']) 
+@jwt_required()
 def recommend(userId):
     query=f""" MATCH (u:User)<-[r:RECOMMENDED_FOR]-(a:Attraction) WHERE u.id="{userId}"
     RETURN a
@@ -231,8 +275,13 @@ def recommend(userId):
     """
     result=list(db.execute_and_fetch(query))
     recommendAttractions=[item["a"] for item in result]
-    return recommendAttractions
-    
+    results = attractions_schema.dump(recommendAttractions)
+    return jsonify(results)
+  
+  
+   
+@app.route('/nearYouRecommendation', methods=['GET']) 
+@jwt_required()
 def nearYouRecommendation():
     usersId="9f130ecc-ab78-4d07-964a-1a38bc131675"
     latitudeAndLongitudeOfTheUser=(
@@ -282,7 +331,12 @@ LIMIT 10;
     for item in listaa:
         listOfNearestAttractions.append(item["a"])
     print(listOfNearestAttractions)
-
+    
+    results = attractions_schema.dump(listOfNearestAttractions)
+    return jsonify(results)
+    
+@app.route('/planTrip', methods=['GET'])
+@jwt_required()
 def planTrip():
     distanceKm=1000000000000000
     cityName="Nis" 
@@ -361,6 +415,9 @@ def planTrip():
     print(query)
     p=list(db.execute_and_fetch(query))
     print(p)
+    recommendAttractions=[item["a"] for item in p]
+    results = attractions_schema.dump(recommendAttractions)
+    return jsonify(results)
     
     
     
@@ -370,17 +427,133 @@ def planTrip():
     # da atrakcije budu za jednu osobu/vise
     # da li se moze doci kolima
      
+     
+@app.route('/serachEngineAll', methods=['POST','GET'])
 def serachEngineAll():
-    stringForSearch=f""" """
+    userId="9f130ecc-ab78-4d07-964a-1a38bc131675"
+    # istorija,musteseeplaces,cultutralHeirtage,zabava
+    listOfHashtags=list(db.execute_and_fetch(query=f""" MATCH (u:User)-[r:WANTS_TO_SEE]->(h:Hashtag) WHERE u.id="{userId}" return h.name """))
+    useeWantsToSeehashtag=[item["h.name"] for item in listOfHashtags]
+
+    dummyString="c"
+    query=f"""
+    WITH toLower("{dummyString}") as dummystring
+    MATCH (c:City)-[:HAS_ATTRACTION]->(a:Attraction)
+    WHERE toLower(c.name) = dummystring
+    OR toLower(a.name) STARTS WITH dummystring
+    OR toLower(a.name) CONTAINS dummystring
+    OR toLower(a.description) CONTAINS dummystring
+    WITH a,CASE WHEN toLower(c.name) = dummystring THEN 1 ELSE 0 END as cityExists,
+    CASE WHEN toLower(a.name) STARTS WITH dummystring THEN 1 ELSE 0 END as nameStartsWith,
+    CASE WHEN toLower(a.name) CONTAINS dummystring THEN 1 ELSE 0 END as nameContains
+    OPTIONAL MATCH (a)-[r:HAS_HASHTAG]-(h:Hashtag)
+    WHERE h.name IN {useeWantsToSeehashtag}
+    WITH a, cityExists, nameStartsWith, nameContains,COUNT(h) AS matchingHashtags
+    RETURN a, cityExists, nameStartsWith,nameContains, COALESCE(matchingHashtags, 0) AS matchingHashtags
+    ORDER BY cityExists DESC, nameStartsWith DESC,nameContains DESC,matchingHashtags DESC """
+    p= list(db.execute_and_fetch(query))
+    listOfResults=[item["a"] for item in p]
+    results = attractions_schema.dump(listOfResults)
+    return jsonify(results)
     
+@app.route('/searchEngineAttractionName', methods=['POST','GET'])
+def searchEngineAttractionName():
+    userId="9f130ecc-ab78-4d07-964a-1a38bc131675"
+    listOfHashtags=list(db.execute_and_fetch(query=f""" MATCH (u:User)-[r:WANTS_TO_SEE]->(h:Hashtag) WHERE u.id="{userId}" return h.name """))
+    userWantsToSeehashtag=[item["h.name"] for item in listOfHashtags]
+    dummyString="va"
+
+    query=f""" 
+    WITH toLower("{dummyString}") as dummyString
+    MATCH (a:Attraction)
+    WHERE toLower(a.name) CONTAINS dummyString
+    OR toLower(a.description) CONTAINS dummyString
+    WITH a,
+        CASE WHEN toLower(a.name) STARTS WITH dummyString THEN 1 ELSE 0 END as startsWithString,
+        CASE WHEN toLower(a.name) CONTAINS dummyString THEN 1 ELSE 0 END as containsString,
+        CASE WHEN toLower(a.description) STARTS WITH dummyString THEN 1 ELSE 0 END as descStartsWithString,
+        CASE WHEN toLower(a.description) CONTAINS dummyString THEN 1 ELSE 0 END as descContainsString,
+        dummyString
+    WITH a, startsWithString, containsString, descStartsWithString, descContainsString, dummyString
+    OPTIONAL MATCH (a)-[r:HAS_HASHTAG]-(h:Hashtag)
+    WHERE h.name IN {userWantsToSeehashtag}
+    AND (toLower(a.name) CONTAINS dummyString OR toLower(a.description) CONTAINS dummyString)
+    WITH a, startsWithString, containsString, descStartsWithString, descContainsString, dummyString, COUNT(h) AS matchingHashtags, h
+    RETURN a, startsWithString, containsString, descStartsWithString, descContainsString, COUNT(h) AS matchingHashtags, a.averageRate
+    ORDER BY startsWithString DESC, containsString DESC, descStartsWithString DESC, descContainsString DESC, a.averageRate DESC
+
+    """
+    p= list(db.execute_and_fetch(query))
+    listOfResults=[item["a"] for item in p]
+    results = attractions_schema.dump(listOfResults)
+    return jsonify(results)
     
+@app.route('/searchEngineHashTag', methods=['POST','GET'])
+def searchEngineHashTag():
+    userId="9f130ecc-ab78-4d07-964a-1a38bc131675"
+    listOfHashtags=list(db.execute_and_fetch(query=f""" MATCH (u:User)-[r:WANTS_TO_SEE]->(h:Hashtag) WHERE u.id="{userId}" return h.name """))
+    userWantsToSeehashtag=[item["h.name"] for item in listOfHashtags]
+    dummyString="ist"
+    query=f""" 
+    WITH toLower("{dummyString}") AS dummyString
+    MATCH (a:Attraction)-[:HAS_HASHTAG]->(h:Hashtag) 
+    WHERE toLower(h.name) STARTS WITH dummyString 
+    WITH a, collect(h.name) as hashtags
+    with a, REDUCE(s = 0, i IN hashtags | s + CASE WHEN i IN {userWantsToSeehashtag} THEN 1 ELSE 0 END) AS rezultat
+    RETURN a,rezultat,a.averageRate
+    ORDER BY rezultat DESC, a.averageRate DESC
+ """
+    p= list(db.execute_and_fetch(query))
+    listOfResults=[item["a"] for item in p]
+    results = attractions_schema.dump(listOfResults)
+    return jsonify(results)
+
+@app.route('/searchEngineActivity', methods=['POST','GET'])
+def searchEngineActivity():
+    userId="9f130ecc-ab78-4d07-964a-1a38bc131675"
+    listOfHashtags=list(db.execute_and_fetch(query=f""" MATCH (u:User)-[r:WANTS_TO_SEE]->(h:Hashtag) WHERE u.id="{userId}" return h.name """))
+    userWantsToSeehashtag=[item["h.name"] for item in listOfHashtags]
+    dummyString="p"
+    query=f""" 
+    WITH toLower("{dummyString}") AS dummyString
+    MATCH (a:Attraction)-[:HAS_ACTIVITY]->(h:Activity) 
+    WHERE toLower(h.name) STARTS WITH dummyString 
+    with a, collect(h.name) as activities
+
+    RETURN a  ,a.averageRate,activities
+    ORDER BY  a.averageRate DESC
+ """
+    p= list(db.execute_and_fetch(query))
+    listOfResults=[item["a"] for item in p]
+    results = attractions_schema.dump(listOfResults)
+    return jsonify(results)
     
+@app.route('/searchEngineCity', methods=['POST','GET'])
+def searchEngineCity():
+    userId="9f130ecc-ab78-4d07-964a-1a38bc131675"
+    listOfHashtags=list(db.execute_and_fetch(query=f""" MATCH (u:User)-[r:WANTS_TO_SEE]->(h:Hashtag) WHERE u.id="{userId}" return h.name """))
+    userWantsToSeehashtag=[item["h.name"] for item in listOfHashtags]
+    dummyString="Nis"
+    query=f""" 
+    WITH toLower("{dummyString}") AS dummyString
+    MATCH (a:Attraction)<-[:HAS_ATTRACTION]-(c:City) 
+    WHERE toLower(c.name) = dummyString 
+    OPTIONAL MATCH (a)-[r:HAS_HASHTAG]-(h:Hashtag)
+    WHERE h.name IN {userWantsToSeehashtag}
+    WITH a,COUNT(h) AS matchingHashtags
+    RETURN a, COALESCE(matchingHashtags, 0) AS matchingHashtags
+    ORDER BY matchingHashtags DESC, a.averageRate DESC
+ """
+    p= list(db.execute_and_fetch(query))
+    listOfResults=[item["a"] for item in p]
+    results = attractions_schema.dump(listOfResults)
+    return jsonify(results)   
+
     
 
     
     
-    
-    
+
     
     
     

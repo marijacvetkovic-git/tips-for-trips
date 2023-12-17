@@ -59,16 +59,16 @@
                     {% endif %}
                 </div>
                 <div class="form-group">
-                    {{ form.date_of_birth.label(class="form-control-label") }}
-                    {% if form.date_of_birth.errors %}
-                        {{ form.date_of_birth(class="form-control form-control-lg is-invalid") }}
+                    {{ form.dateofbirth.label(class="form-control-label") }}
+                    {% if form.dateofbirth.errors %}
+                        {{ form.dateofbirth(class="form-control form-control-lg is-invalid") }}
                         <div class="invalid-feedback">
-                            {% for error in form.date_of_birth.errors %}
+                            {% for error in form.dateofbirth.errors %}
                                 <span>{{ error }}</span>
                             {% endfor %}
                         </div>
                     {% else %}
-                        {{ form.date_of_birth(class="form-control form-control-lg") }}
+                        {{ form.dateofbirth(class="form-control form-control-lg") }}
                     {% endif %}
                 </div>
                 <div class="form-group">

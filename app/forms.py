@@ -1,4 +1,6 @@
 from datetime import date
+import datetime
+from time import strptime
 from flask_wtf import FlaskForm
 from wtforms import BooleanField, FloatField, IntegerField, StringField,PasswordField,SubmitField,DateField, ValidationError,TimeField
 from wtforms.validators import DataRequired, Length, Email, EqualTo
@@ -10,12 +12,13 @@ from app.models import Activity, Attraction, City, Hashtag
 
 class RegistrationForm(FlaskForm):
     #TODO: DODAJ PROVERU ZA LONGITUDU I LATITUDU..mada to ce se unese preko fronta
-          
+    csrf_enabled = False  # Onemogući CSRF zaštitu
+
     username=StringField('Username', validators=[DataRequired(),Length(min=2,max=50)])
     email= StringField('Email', validators=[DataRequired(), Email()] )
     password= PasswordField('Password', validators=[DataRequired()])
     confirm_password=PasswordField('Confirm password', validators=[DataRequired(),EqualTo('password')])
-    date_of_birth=DateField('Date of Birth', validators=[DataRequired()])
+    dateofbirth=DateField('Date of Birth', validators=[DataRequired()])
     longitude=FloatField('Longitude', validators=[DataRequired()])
     latitude=FloatField('Latitude', validators=[DataRequired()])
     submit = SubmitField('Sign Up')
@@ -25,21 +28,25 @@ class RegistrationForm(FlaskForm):
         "MATCH (u:User {username: $username}) RETURN u.username ;",
        {"username": username.data}
         )
+        print(list(users))
         
         if list(users):
             raise ValidationError('User with specific username already exist')
         
     def validate_email(self,email):
-        users= db.execute_and_fetch(
-        "MATCH (u:User {email: $email}) RETURN u",
-        {"email":email.data})
+        print("Validating email...")
+        query=f"""  MATCH (u:User{{email:'{email.data}'}}) RETURN u"""
+        users= db.execute_and_fetch(query)
+        print(list(users))
         if list(users):
             raise ValidationError('User with specific email already exist')
     
-    def validate_date_of_birth(form, field):
+    def validate_dateofbirth(self, dateofbirth):
         min_date = date.min
         max_date = date.today()
-        if field.data < min_date or field.data > max_date:
+       
+        d:date=dateofbirth.data
+        if d < min_date or d > max_date:
            raise ValidationError('The date of birth must not be in the future.')
     
 class LogInForm(FlaskForm):

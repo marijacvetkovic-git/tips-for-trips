@@ -31,7 +31,7 @@ class Attraction(Node):
      # TODO: Vd ali nam treba unique ime d abude..imamo dva night and day npr lokala
     latitude: float = Field(exists=True, db=db)
     longitude: float = Field(exists=True, db=db)
-    description:str = Field(exists=True,db=db)
+    description:str = Field(index=True,exists=True,db=db)
     familyFriendly:bool=Field(exists=True,db=db)
     # TODO: Vidi treba li exists true da bude
     durationOfVisit:time=Field(exists=True,db=db)
