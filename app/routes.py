@@ -3,7 +3,8 @@ import datetime
 import random
 import sys
 import uuid
-from flask import jsonify, render_template,flash,redirect, url_for
+from flask import jsonify, render_template,flash,redirect, url_for,make_response,request
+import jwt
 from app import app , bcrypt, db ,ma
 from app.forms import AddActivityForm, AddCityForm, AddHasActivityForm, AddHasAttractionForm, AddHasHashForm, AddHashtagForm, AddVisitedForm, AddWantsToSeeForm, LogInForm, RegistrationForm,AddAttractionForm
 from app.models import Activity, Attraction, City, HasActivity, HasAttraction, HasHashtag, Hashtag, User, Visited, WantsToSee
@@ -11,6 +12,7 @@ from gqlalchemy.query_builders.memgraph_query_builder import Operator,Order
 from gqlalchemy import match
 from flask_login import login_user
 from scipy.spatial.distance import cdist
+from functools import wraps
 from flask_jwt_extended import (
     JWTManager,
     create_access_token,
@@ -19,6 +21,7 @@ from flask_jwt_extended import (
     jwt_required,
 )
 
+jwtM=JWTManager(app)
 
 posts = [
     {
@@ -93,29 +96,19 @@ def login():
             if not bcrypt.check_password_hash(user.password,form.password.data):
                 flash('Login Unsuccessful. Please check username and password', 'danger')
             else:
-                access_token = create_access_token(identity=user.username)
+                expires_delta = datetime.timedelta(minutes=60)  # Token važi 15 minuta
+                access_token = create_access_token(identity=user.username,expires_delta=expires_delta)
                 refresh_token = create_refresh_token(identity=user.username)
 
-                # login_user(user,remember=form.remember.data)
-                # flash('You have been logged in!', 'success')
+        # access_token = create_access_token(identity=user_id, expires_delta=expires_delta, fresh=True, additional_claims={'roles': users[user_id]['roles']})
                 return jsonify(
                 {"access_token": access_token, "refresh_token": refresh_token}
             )
-                # return redirect(url_for('home'))
         
     return render_template('login.html', title='Login', form=form)
 
 
-@app.route("/refresh")
-class RefreshResource(Resource):
-    @jwt_required(refresh=True)
-    def post(self):
 
-        current_user = get_jwt_identity()
-
-        new_access_token = create_access_token(identity=current_user)
-
-        return make_response(jsonify({"access_token": new_access_token}), 200)
 @app.route("/addAttraction",methods=['GET','POST'])
 @jwt_required()
 
@@ -267,7 +260,7 @@ def newUsercoldStartRecommendation(userId):
     db.execute(query)
 
 
-@app.route('/recommend', methods=['GET']) 
+@app.route('/recommend/<string:userId>', methods=['GET']) 
 @jwt_required()
 def recommend(userId):
     query=f""" MATCH (u:User)<-[r:RECOMMENDED_FOR]-(a:Attraction) WHERE u.id="{userId}"
@@ -336,7 +329,7 @@ LIMIT 10;
     results = attractions_schema.dump(listOfNearestAttractions)
     return jsonify(results)
     
-@app.route('/planTrip', methods=['GET'])
+@app.route('/planTrip', methods=['POST'])
 @jwt_required()
 def planTrip():
     distanceKm=1000000000000000
@@ -555,7 +548,7 @@ def searchEngineCity():
     
     
 
-    
+#TODO: Dodaj role i u deo za login onda dodaj claims
     
     
     
