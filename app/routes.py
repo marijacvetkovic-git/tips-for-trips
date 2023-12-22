@@ -1,13 +1,8 @@
 
-from ast import List
-from collections import OrderedDict
-from contextlib import nullcontext
 import datetime
 import random
 import sys
-import time
 import uuid
-from click import DateTime
 from flask import jsonify, render_template,flash,redirect, url_for
 from app import app , bcrypt, db ,ma
 from app.forms import AddActivityForm, AddCityForm, AddHasActivityForm, AddHasAttractionForm, AddHasHashForm, AddHashtagForm, AddVisitedForm, AddWantsToSeeForm, LogInForm, RegistrationForm,AddAttractionForm
@@ -15,11 +10,6 @@ from app.models import Activity, Attraction, City, HasActivity, HasAttraction, H
 from gqlalchemy.query_builders.memgraph_query_builder import Operator,Order
 from gqlalchemy import match
 from flask_login import login_user
-import pandas as pd
-import numpy as py
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.cluster import KMeans
 from scipy.spatial.distance import cdist
 from flask_jwt_extended import (
     JWTManager,
@@ -115,6 +105,17 @@ def login():
         
     return render_template('login.html', title='Login', form=form)
 
+
+@app.route("/refresh")
+class RefreshResource(Resource):
+    @jwt_required(refresh=True)
+    def post(self):
+
+        current_user = get_jwt_identity()
+
+        new_access_token = create_access_token(identity=current_user)
+
+        return make_response(jsonify({"access_token": new_access_token}), 200)
 @app.route("/addAttraction",methods=['GET','POST'])
 @jwt_required()
 
