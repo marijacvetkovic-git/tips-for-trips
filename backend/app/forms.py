@@ -3,7 +3,7 @@ import datetime
 from time import strptime
 from flask_wtf import FlaskForm
 from wtforms import BooleanField, FloatField, IntegerField, StringField,PasswordField,SubmitField,DateField, ValidationError,TimeField
-from wtforms.validators import DataRequired, Length, Email, EqualTo
+from wtforms.validators import DataRequired, Length, EqualTo,Email
 from app import db
 from gqlalchemy import match
 from gqlalchemy.query_builders.memgraph_query_builder import Operator
@@ -11,9 +11,6 @@ from gqlalchemy.query_builders.memgraph_query_builder import Operator
 from app.models import Activity, Attraction, City, Hashtag
 
 class RegistrationForm(FlaskForm):
-    #TODO: DODAJ PROVERU ZA LONGITUDU I LATITUDU..mada to ce se unese preko fronta
-    csrf_enabled = False  # Onemogući CSRF zaštitu
-
     username=StringField('Username', validators=[DataRequired(),Length(min=2,max=50)])
     email= StringField('Email', validators=[DataRequired(), Email()] )
     password= PasswordField('Password', validators=[DataRequired()])
@@ -21,7 +18,6 @@ class RegistrationForm(FlaskForm):
     dateofbirth=DateField('Date of Birth', validators=[DataRequired()])
     longitude=FloatField('Longitude', validators=[DataRequired()])
     latitude=FloatField('Latitude', validators=[DataRequired()])
-    submit = SubmitField('Sign Up')
   
     def validate_username(self,username):
         users=db.execute_and_fetch(
@@ -29,12 +25,12 @@ class RegistrationForm(FlaskForm):
        {"username": username.data}
         )
         print(list(users))
+        print(len(list(users)))
         
-        if list(users):
+        if len(list(users))>0:
             raise ValidationError('User with specific username already exist')
         
     def validate_email(self,email):
-        print("Validating email...")
         query=f"""  MATCH (u:User{{email:'{email.data}'}}) RETURN u"""
         users= db.execute_and_fetch(query)
         print(list(users))
@@ -44,10 +40,17 @@ class RegistrationForm(FlaskForm):
     def validate_dateofbirth(self, dateofbirth):
         min_date = date.min
         max_date = date.today()
-       
-        d:date=dateofbirth.data
-        if d < min_date or d > max_date:
-           raise ValidationError('The date of birth must not be in the future.')
+
+        # Extract year, month, and day from the dateofbirth dictionary
+        year = dateofbirth.data.get('year')
+        month = dateofbirth.data.get('month')
+        day = dateofbirth.data.get('day')
+
+        # Create a datetime.date object for comparison
+        dob_date = date(year, month, day)
+
+        if dob_date < min_date or dob_date > max_date:
+            raise ValidationError('The date of birth must not be in the future.')
     
 class LogInForm(FlaskForm):
     

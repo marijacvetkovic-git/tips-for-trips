@@ -1,11 +1,12 @@
 import datetime
 import uuid
-from flask import Blueprint,render_template,jsonify,flash
+from flask import Blueprint,render_template,jsonify,flash, request
 from app import app , bcrypt, db ,ma
 from gqlalchemy import match
 from gqlalchemy.query_builders.memgraph_query_builder import Operator
 from app.forms import LogInForm, RegistrationForm
 from app.models import User
+
 from flask_jwt_extended import (
     JWTManager,
     create_access_token,
@@ -17,19 +18,35 @@ from flask_jwt_extended import (
 jwtM=JWTManager(app)
 auth= Blueprint("auth",__name__,static_folder="static",template_folder="templates")
 
-@auth.route("/register", methods=['GET', 'POST'])
+@auth.route("/register", methods=['GET'])
 def register():
-    form = RegistrationForm()
-    if form.validate_on_submit():
+    req_data = request.get_json() 
+    form = RegistrationForm(
+    username=req_data.get("username"),
+    email=req_data.get("email"),
+    password=req_data.get("password"),
+    confirm_password= req_data.get("confirm_password"),
+    dateofbirth=req_data.get("dateofbirth"),
+    longitude=req_data.get("longitude"),
+    latitude=req_data.get("latitude"))
+
+    
+    
+    if form.validate():
+            print(form.password.data)
+            [assword,salt]=bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+            print(assword)
+            print(salt)
             user=User(id=str(uuid.uuid4()),username=form.username.data,password=bcrypt.generate_password_hash(form.password.data).decode('utf-8'),
                      email=form.email.data,dateOfBirth=form.date_of_birth.data,longitude=form.longitude.data,latitude=form.latitude.data)
             user.save(db)
            
             # flash(f'Your accound is now created, now you can log in and plan your next trip!','success')
-            return jsonify({"username":user.username,"id":user.id})
-    else :
-        errors = {"errors": form.errors}
-        return jsonify(errors), 400
+            return jsonify({"username":user.username,"id":user.id}),200
+    errors = {"errors": form.errors}
+    return jsonify(errors), 400
+   
+
 
         
    
