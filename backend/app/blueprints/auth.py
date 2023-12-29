@@ -34,11 +34,17 @@ def register():
     
     if form.validate():
             print(form.password.data)
-            [assword,salt]=bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-            print(assword)
-            print(salt)
-            user=User(id=str(uuid.uuid4()),username=form.username.data,password=bcrypt.generate_password_hash(form.password.data).decode('utf-8'),
-                     email=form.email.data,dateOfBirth=form.date_of_birth.data,longitude=form.longitude.data,latitude=form.latitude.data)
+            print(form.dateofbirth.data)
+            dateOfBirth=datetime.date(year=(form.dateofbirth.data["year"]),month=form.dateofbirth.data["month"],day=form.dateofbirth.data["day"])
+            print(dateOfBirth)
+    
+
+
+            
+            
+            p=bcrypt.generate_password_hash(form.password.data)
+            user=User(id=str(uuid.uuid4()),username=form.username.data,password=bcrypt.generate_password_hash(form.password.data),
+                     email=form.email.data,dateOfBirth=dateOfBirth,longitude=form.longitude.data,latitude=form.latitude.data)
             user.save(db)
            
             # flash(f'Your accound is now created, now you can log in and plan your next trip!','success')
