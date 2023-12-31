@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_cors import CORS
 from gqlalchemy import Memgraph
 from config import Config
 from flask_bcrypt import Bcrypt
@@ -9,6 +10,7 @@ from flask_jwt_extended import JWTManager
 
 app = Flask(__name__)
 ma = Marshmallow(app)
+CORS(app)
 
 bcrypt = Bcrypt(app)
 login_menager=LoginManager(app)

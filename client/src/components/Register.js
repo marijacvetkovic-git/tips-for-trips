@@ -1,129 +1,109 @@
-// import { useEffect,useState } from "react";
-// function Register()
-// {
-//    const [forma,setForma]=useState({})
-//    useEffect(
-//       ()=>{
-//          fetch("/auth/register").then(res => res.json()).then(data => {
-//          console.log("e usao i fetch")
-//          console.log(data)
-//          setForma(data)
+import { useEffect,useState } from "react";
+import axios from "axios";
 
-//     });
-//       }
-//    );
-//    console.log(" odradio rerender")
-//    return (
-//    <>
-//        <div class="content-section">
-//         <form method="POST" action="">
-//             {{forma.hidden_tag()}}
-//             <fieldset class ="form-group">
-//                 <legend  class="border-bottom mb-4">Join Today </legend>
-//                 <div class="form-group">
-//                     {{ forma.username.label(class="form-control-label") }}
+function Register()
+{
+    const [username,setUsername]=useState("")
+    const [email,setEmail]=useState("")
+    const [password,setPassword]=useState("")
+    const [confirm_password,setConfirm_password]=useState("")
+    const [dateOfBirth,setDateOfBirth]=useState("")
+    const [longitude,setLongitude]=useState("")
+    const [latitude,setLatitude]=useState("")
 
-//                     {% if forma.username.errors %}
-//                         {{ forma.username(class="form-control form-control-lg is-invalid") }}
-//                         <div class="invalid-feedback">
-//                             {% for error in forma.username.errors %}
-//                                 <span>{{ error }}</span>
-//                             {% endfor %}
-//                         </div>
-//                     {% else %}
-//                         {{ form.username(class="form-control form-control-lg") }}
-//                     {% endif %}
-//                 </div>
-//                 <div class="form-group">
-//                     {{ form.email.label(class="form-control-label") }}
-//                     {% if form.email.errors %}
-//                         {{ form.email(class="form-control form-control-lg is-invalid") }}
-//                         <div class="invalid-feedback">
-//                             {% for error in form.email.errors %}
-//                                 <span>{{ error }}</span>
-//                             {% endfor %}
-//                         </div>
-//                     {% else %}
-//                         {{ form.email(class="form-control form-control-lg") }}
-//                     {% endif %}
-//                 </div>
-//                 <div class="form-group">
-//                     {{ form.password.label(class="form-control-label") }}
-//                     {% if form.password.errors %}
-//                         {{ form.password(class="form-control form-control-lg is-invalid") }}
-//                         <div class="invalid-feedback">
-//                             {% for error in form.password.errors %}
-//                                 <span>{{ error }}</span>
-//                             {% endfor %}
-//                         </div>
-//                     {% else %}
-//                         {{ form.password(class="form-control form-control-lg") }}
-//                     {% endif %}
-//                 </div>
-//                 <div class="form-group">
-//                     {{ form.confirm_password.label(class="form-control-label") }}
-//                     {% if form.confirm_password.errors %}
-//                         {{ form.confirm_password(class="form-control form-control-lg is-invalid") }}
-//                         <div class="invalid-feedback">
-//                             {% for error in form.confirm_password.errors %}
-//                                 <span>{{ error }}</span>
-//                             {% endfor %}
-//                         </div>
-//                     {% else %}
-//                         {{ form.confirm_password(class="form-control form-control-lg") }}
-//                     {% endif %}
-//                 </div>
-//                 <div class="form-group">
-//                     {{ form.dateofbirth.label(class="form-control-label") }}
-//                     {% if form.dateofbirth.errors %}
-//                         {{ form.dateofbirth(class="form-control form-control-lg is-invalid") }}
-//                         <div class="invalid-feedback">
-//                             {% for error in form.dateofbirth.errors %}
-//                                 <span>{{ error }}</span>
-//                             {% endfor %}
-//                         </div>
-//                     {% else %}
-//                         {{ form.dateofbirth(class="form-control form-control-lg") }}
-//                     {% endif %}
-//                 </div>
-//                 <div class="form-group">
-//                     {{ form.longitude.label(class="form-control-label") }}
-//                     {% if form.longitude.errors %}
-//                         {{ form.longitude(class="form-control form-control-lg is-invalid") }}
-//                         <div class="invalid-feedback">
-//                             {% for error in form.longitude.errors %}
-//                                 <span>{{ error }}</span>
-//                             {% endfor %}
-//                         </div>
-//                     {% else %}
-//                         {{ form.longitude(class="form-control form-control-lg") }}
-//                     {% endif %}
-//                 </div>
-//                 <div class="form-group">
-//                     {{ form.latitude.label(class="form-control-label") }}
-//                     {% if form.latitude.errors %}
-//                         {{ form.latitude(class="form-control form-control-lg is-invalid") }}
-//                         <div class="invalid-feedback">
-//                             {% for error in form.latitude.errors %}
-//                                 <span>{{ error }}</span>
-//                             {% endfor %}
-//                         </div>
-//                     {% else %}
-//                         {{ form.latitude(class="form-control form-control-lg") }}
-//                     {% endif %}
-//                 </div>
-//             </fieldset>
-//             <div class="form-group">
-//                 {{ form.submit(class="btn btn-outline-info") }}
-//             </div>
-//         </form>
-//     </div>
-//     <div class="border-top pt-3">
-//         <small class="text-muted">
-//             Already Have An Account? <a class="ml-2" href="{{ url_for('auth.login') }}">Sign In</a>
-//         </small>
-//     </div>
-//    </>
-//    );
-// }
-// export default Register
+
+    const handleSubmit=(e)=>{
+     e.preventDefault();
+     const registrationBody={username,email,password,confirm_password,dateOfBirth,longitude,latitude}
+  
+     console.log(registrationBody)
+     axios.post("http://127.0.0.1:5000/auth/register",registrationBody)
+     .then(response=>{
+          if (response.status==200)
+          {
+               
+          }
+         }
+         )
+     .catch(error=>{console.error('Error:', error);
+     });
+}
+   return(
+    <>
+    <article>
+       <form onSubmit={handleSubmit}>
+        <div className="form-control">
+            <label htmlFor="username">Username:</label>
+            <input type="text"
+            id="username"
+            name="username"
+            value={username}
+            onChange={(e)=>setUsername(e.target.value)}
+             />
+        </div>
+        <div className="form-control">
+            <label htmlFor="email">Email:</label>
+            <input type="email"
+            id="email"
+            name="email"
+            value={email}
+            onChange={(e)=>setEmail(e.target.value)}
+             />
+        </div>
+
+        <div className="form-control">
+            <label htmlFor="password">Password:</label>
+            <input type="password"
+            id="password"
+            name="password"
+            value={password}
+            onChange={(e)=>setPassword(e.target.value)}
+             />
+        </div>
+             <div className="form-control">
+            <label htmlFor="confirm_password">Confirm Password:</label>
+            <input type="password"
+            id="confirm_password"
+            name="confirm_password"
+            value={confirm_password}
+            onChange={(e)=>setConfirm_password(e.target.value)}
+             />
+        </div>
+             <div className="form-control">
+            <label htmlFor="dateOfBirth">Date of birth:</label>
+            <input type="date"
+            id="dateOfBirth"
+            name="dateOfBirth"
+            value={dateOfBirth}
+            onChange={(e)=>setDateOfBirth(e.target.value)}
+             />
+        </div>
+             <div className="form-control">
+            <label htmlFor="longitude">Longitude:</label>
+            <input type="number"
+            id="longitude"
+            name="longitude"
+            value={longitude}
+            onChange={(e)=>setLongitude(e.target.value)}
+             />
+        </div>
+        <div className="form-control">
+            <label htmlFor="latitude">Latitude:</label>
+            <input type="number"
+            id="latitude"
+            name="latitude"
+            value={latitude}
+            onChange={(e)=>setLatitude(e.target.value)}
+             />
+        </div>
+        <button type="submit">Next</button>
+
+       </form>
+
+
+    </article>
+    </>
+
+   );
+}
+export default Register

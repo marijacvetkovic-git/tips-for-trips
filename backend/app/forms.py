@@ -2,7 +2,7 @@ from datetime import date
 import datetime
 from time import strptime
 from flask_wtf import FlaskForm
-from wtforms import BooleanField, FloatField, IntegerField, StringField,PasswordField,SubmitField,DateField, ValidationError,TimeField
+from wtforms import BooleanField, FieldList, FloatField, IntegerField, StringField,PasswordField,SubmitField,DateField, ValidationError,TimeField
 from wtforms.validators import DataRequired, Length, EqualTo,Email
 from app import db
 from gqlalchemy import match
@@ -18,16 +18,17 @@ class RegistrationForm(FlaskForm):
     dateofbirth=DateField('Date of Birth', validators=[DataRequired()])
     longitude=FloatField('Longitude', validators=[DataRequired()])
     latitude=FloatField('Latitude', validators=[DataRequired()])
+    submit=SubmitField('Register')
   
     def validate_username(self,username):
         users=db.execute_and_fetch(
         "MATCH (u:User {username: $username}) RETURN u.username ;",
        {"username": username.data}
         )
-        print(list(users))
+        p=list(users)
         print(len(list(users)))
         
-        if len(list(users))>0:
+        if p:
             raise ValidationError('User with specific username already exist')
         
     def validate_email(self,email):
@@ -40,16 +41,18 @@ class RegistrationForm(FlaskForm):
     def validate_dateofbirth(self, dateofbirth):
         min_date = date.min
         max_date = date.today()
+        date_object = date.fromisoformat(dateofbirth.data)
 
-        # Extract year, month, and day from the dateofbirth dictionary
-        year = dateofbirth.data.get('year')
-        month = dateofbirth.data.get('month')
-        day = dateofbirth.data.get('day')
 
-        # Create a datetime.date object for comparison
-        dob_date = date(year, month, day)
+        # # Extract year, month, and day from the dateofbirth dictionary
+        # year = dateofbirth.data.get('year')
+        # month = dateofbirth.data.get('month')
+        # day = dateofbirth.data.get('day')
 
-        if dob_date < min_date or dob_date > max_date:
+        # # Create a datetime.date object for comparison
+        # dob_date = date(year, month, day)
+
+        if date_object < min_date or date_object > max_date:
             raise ValidationError('The date of birth must not be in the future.')
     
 class LogInForm(FlaskForm):
@@ -57,7 +60,6 @@ class LogInForm(FlaskForm):
     username=StringField('Username', validators=[DataRequired(),Length(min=2,max=50)])
     password= PasswordField('Password', validators=[DataRequired()])
     remember = BooleanField('Remember Me')
-    submit = SubmitField('Log In')
     
 class AddAttractionForm(FlaskForm):
     def validate_longitude(formica,l):
@@ -284,9 +286,9 @@ class AddVisitedForm(FlaskForm):
   
 class AddWantsToSeeForm(FlaskForm):
     idOfUser=StringField("Id of user",validators=[DataRequired()])
-    idOfHashtag=StringField("Id of hashtag",validators=[DataRequired()])
+    idsOfHashtags=StringField("Ids of hashtags",validators=[DataRequired()])
     submit = SubmitField('Add')
-    tupleForResult=("","")
+    tupleForResult=("",[])
     
     def validate_idOfUser(form,nzm):
         users=(
@@ -301,33 +303,36 @@ class AddWantsToSeeForm(FlaskForm):
             raise ValidationError('User with specific id does not exist!')
         user:Attraction =listOfUsers[0]["user"]
         idOfUser=user._id
-       
-        hashtags=(
-            match()
-            .node(labels="Hashtag",variable="hashtag")
-            .where(item="hashtag.id",operator=Operator.EQUAL,literal=form.idOfHashtag.data)
-            .return_("hashtag")
-            .execute()    
-        )
-        listOfhashtags=list(hashtags)
-        if not listOfhashtags:
-            raise ValidationError('Hashtag with specific id does not exist!')
-        hashtag:Hashtag =listOfhashtags[0]["hashtag"]
-        idOfHashtag=hashtag._id
+        listOfIdsHashtag = form.idsOfHashtags.data.split(',')
+        listToReturn=[]
+
+        for hashtag in listOfIdsHashtag:
+            hashtags=(
+                match()
+                .node(labels="Hashtag",variable="hashtag")
+                .where(item="hashtag.id",operator=Operator.EQUAL,literal=hashtag)
+                .return_("hashtag")
+                .execute()    
+            )
+            listOfhashtags=list(hashtags)
+            if not listOfhashtags:
+                raise ValidationError('Hashtag with specific id does not exist!')
+            h:Hashtag =listOfhashtags[0]["hashtag"]
+            listToReturn.append(h._id)
         
-        
-        wantsToSee=(
-            match()
-            .node(labels="User",variable="user",id=form.idOfUser.data)
-            .to(relationship_type="WANTS_TO_SEE")
-            .node(labels="Hashtag",variable="hashtag",id=form.idOfHashtag.data)
-            .return_(results=["user","hashtag"])
-            .execute()
-        )
-        listOfwantsToSee=list(wantsToSee)
-        if listOfwantsToSee:
-            raise ValidationError('User with specific id already has hastag with specific id !')
-        form.tupleForResult=(idOfUser,idOfHashtag)
+        for hashtag in listOfIdsHashtag:
+            wantsToSee=(
+                match()
+                .node(labels="User",variable="user",id=form.idOfUser.data)
+                .to(relationship_type="WANTS_TO_SEE")
+                .node(labels="Hashtag",variable="hashtag",id=hashtag)
+                .return_(results=["user","hashtag"])
+                .execute()
+            )
+            listOfwantsToSee=list(wantsToSee)
+            if listOfwantsToSee:
+                raise ValidationError('User with specific id already has hastag with specific id !')
+        form.tupleForResult=(idOfUser,listToReturn)
     
 class AddHasAttractionForm(FlaskForm):
     idOfCity=StringField("Id of city",validators=[DataRequired()])

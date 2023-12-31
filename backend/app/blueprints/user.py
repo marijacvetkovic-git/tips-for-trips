@@ -14,22 +14,6 @@ attraction_schema = AttractionSchema()
 attractions_schema = AttractionSchema(many=True)
 
 
-@user.route('/newUsercoldStartRecommendation/<string:userId>', methods=['GET']) 
-def newUsercoldStartRecommendation(userId):
-    #TODO: Poziva se prilikom registracije korisnika
-    query=f""" MATCH (u:User)-[:WANTS_TO_SEE]->(h:Hashtag)<-[:HAS_HASHTAG]-(a:Attraction) WHERE u.id="{userId}"
-    RETURN a.id
-    ORDER BY a.averageRate DESC
-    LIMIT 5 """
-    result=list(db.execute_and_fetch(query))
-    listOfAttributes = [item["a.id"] for item in result]
-    query=f""" MATCH (u:User) WHERE u.id='{userId}'
-                MATCH(a:Attraction) WHERE a.id IN {listOfAttributes}
-                MERGE(a)-[r:RECOMMENDED_FOR]->(u) 
-        """
-    db.execute(query)
-
-
 @user.route('/recommend/<string:userId>', methods=['GET']) 
 @jwt_required()
 def recommend(userId):
