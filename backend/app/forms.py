@@ -8,7 +8,7 @@ from app import db
 from gqlalchemy import match
 from gqlalchemy.query_builders.memgraph_query_builder import Operator
 
-from app.models import Activity, Attraction, City, Hashtag
+from app.models import Activity, Attraction, City, Hashtag, User
 
 class RegistrationForm(FlaskForm):
     username=StringField('Username', validators=[DataRequired(),Length(min=2,max=50)])
@@ -32,10 +32,10 @@ class RegistrationForm(FlaskForm):
             raise ValidationError('User with specific username already exist')
         
     def validate_email(self,email):
-        query=f"""  MATCH (u:User{{email:'{email.data}'}}) RETURN u"""
+        query=f"""MATCH (u:User{{email:'{email.data}'}}) RETURN u"""
         users= db.execute_and_fetch(query)
-        print(list(users))
-        if list(users):
+        p=list(users)
+        if p:
             raise ValidationError('User with specific email already exist')
     
     def validate_dateofbirth(self, dateofbirth):
@@ -43,23 +43,15 @@ class RegistrationForm(FlaskForm):
         max_date = date.today()
         date_object = date.fromisoformat(dateofbirth.data)
 
-
-        # # Extract year, month, and day from the dateofbirth dictionary
-        # year = dateofbirth.data.get('year')
-        # month = dateofbirth.data.get('month')
-        # day = dateofbirth.data.get('day')
-
-        # # Create a datetime.date object for comparison
-        # dob_date = date(year, month, day)
-
         if date_object < min_date or date_object > max_date:
             raise ValidationError('The date of birth must not be in the future.')
+    
     
 class LogInForm(FlaskForm):
     
     username=StringField('Username', validators=[DataRequired(),Length(min=2,max=50)])
     password= PasswordField('Password', validators=[DataRequired()])
-    remember = BooleanField('Remember Me')
+    # remember = BooleanField('Remember Me')
     
 class AddAttractionForm(FlaskForm):
     def validate_longitude(formica,l):
@@ -289,8 +281,8 @@ class AddWantsToSeeForm(FlaskForm):
     idsOfHashtags=StringField("Ids of hashtags",validators=[DataRequired()])
     submit = SubmitField('Add')
     tupleForResult=("",[])
-    
     def validate_idOfUser(form,nzm):
+        print(form.idsOfHashtags.data)
         users=(
             match()
             .node(labels="User",variable="user")
@@ -301,7 +293,7 @@ class AddWantsToSeeForm(FlaskForm):
         listOfUsers=list(users)
         if not listOfUsers:
             raise ValidationError('User with specific id does not exist!')
-        user:Attraction =listOfUsers[0]["user"]
+        user:User =listOfUsers[0]["user"]
         idOfUser=user._id
         listOfIdsHashtag = form.idsOfHashtags.data.split(',')
         listToReturn=[]

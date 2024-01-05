@@ -1,4 +1,5 @@
 import datetime
+import string
 import uuid
 from flask import Blueprint,render_template,jsonify,flash, request
 from app import app , bcrypt, db ,ma
@@ -22,7 +23,6 @@ auth= Blueprint("auth",__name__,static_folder="static",template_folder="template
 # kada stavim da je post metoda forma nece da se kreira
 def register():
     req_data = request.get_json() 
-    # dateOfBirth=datetime.date(year=req_data.get("dateofbirth")["year"],month=req_data.get("dateofbirth")["month"],day=req_data.get("dateofbirth")["day"])
     form = RegistrationForm(
     username=req_data.get("username"),
     email=req_data.get("email"),
@@ -33,7 +33,6 @@ def register():
     latitude=req_data.get("latitude")
     )
     if form.validate_on_submit():
-            # dateOfBirth=datetime.date(year=(form.dateofbirth.data["year"]),month=form.dateofbirth.data["month"],day=form.dateofbirth.data["day"])
             user=User(id=str(uuid.uuid4()),username=form.username.data,password=bcrypt.generate_password_hash(form.password.data),
                      email=form.email.data,dateOfBirth=1,longitude=form.longitude.data,latitude=form.latitude.data)
             
@@ -41,16 +40,15 @@ def register():
             return jsonify({"username":user.username,"id":user.id}),200
     else:
         errors = {"errors": form.errors}
-        return jsonify(errors), 406
+        return jsonify(errors), 206
    
-@auth.route("/login", methods=['GET'])
-def login():
-    req_data = request.get_json() 
+@auth.route("/login/<string:username>/<string:password>", methods=['GET'])
+def login(username,password):
     form = LogInForm(
-    username=req_data.get("username"),
-    password= req_data.get("password"),
-    remember=req_data.get("remember")
-    )
+        username=username,
+        password=password,
+        )
+    
     if form.validate():
         users=(
           match()
@@ -61,24 +59,26 @@ def login():
           )
         listOfUsers=list(users)
         if not listOfUsers :
-            return jsonify({"message":'Login Unsuccessful. Please check username and password'}),400
+            return jsonify({"message":'Login Unsuccessful. Please check username and password'}),206
         else:   
             user:User=(listOfUsers[0])['user']
             print(user.password)
             print(form.password.data)
             if not bcrypt.check_password_hash(user.password,form.password.data):
-                return jsonify({"message":'Login Unsuccessful. Please check username and password'}),400
+                return jsonify({"message":'Login Unsuccessful. Please check username and password'}),206
             else:
                 expires_delta = datetime.timedelta(minutes=60) 
-                access_token = create_access_token(identity=user.username,expires_delta=expires_delta)
-        # access_token = create_access_token(identity=user_id, expires_delta=expires_delta, fresh=True, additional_claims={'roles': users[user_id]['roles']})
+                # access_token = create_access_token(identity=user.username,expires_delta=expires_delta)
+                access_token = create_access_token(identity=user.id, expires_delta=expires_delta, fresh=True, additional_claims={'username': user.username,'id':user.id})
                 return jsonify(
-                {"access_token": access_token}
+                {"token": access_token}
             ),200
         
 @auth.route("/createRelationship_WANTS_TO_SEE",methods=['POST'])
 def createRelationship_WANTS_TO_SEE():
-    req_data = request.get_json()
+    req_data = request.get_json()    
+    # idsOfHashtags=','.join(req_data.get("idsOfHashtags"))
+    # p:string=""+idsOfHashtags
     form = AddWantsToSeeForm(
     idOfUser=req_data.get("idOfUser"),
     idsOfHashtags=req_data.get("idsOfHashtags")
@@ -91,7 +91,7 @@ def createRelationship_WANTS_TO_SEE():
         return jsonify(resultList),200
     else:
         errors = {"errors": form.errors}
-        return jsonify(errors), 406
+        return jsonify(errors), 206
     
          
     

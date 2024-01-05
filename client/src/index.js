@@ -1,15 +1,18 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
+import "bootstrap"
+import './components/Register&&LogIn.css'
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import Register from './components/Register'
+// import Register from './components/Register';
+// import Preferences from './components/Preferences';
+import Proba from './components/Proba';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <App />
-    <Register/>
   </React.StrictMode>
 );
 

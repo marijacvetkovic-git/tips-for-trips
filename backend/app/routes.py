@@ -8,6 +8,7 @@ from app import app , bcrypt, db ,ma
 from app.blueprints.auth import auth
 from app.blueprints.admin import admin
 from app.blueprints.user import user
+from app.blueprints.helpers import helpers
 
 from app.forms import AddActivityForm, AddCityForm, AddHasActivityForm, AddHasAttractionForm, AddHasHashForm, AddHashtagForm, AddVisitedForm, AddWantsToSeeForm, LogInForm, RegistrationForm,AddAttractionForm
 from app.models import Activity, Attraction, City, HasActivity, HasAttraction, HasHashtag, Hashtag, User, Visited, WantsToSee
@@ -41,24 +42,25 @@ posts = [
 app.register_blueprint(auth, url_prefix='/auth')
 app.register_blueprint(admin, url_prefix='/admin')
 app.register_blueprint(user, url_prefix='/user')
-class AttractionSchema(ma.Schema):
-    class Meta:
-        fields = ('id','name','latitude','longitude','description','familyFriendly','durationOfVisit','parking','averageRate')
+app.register_blueprint(helpers,url_prefix='/helpers')
+# class AttractionSchema(ma.Schema):
+#     class Meta:
+#         fields = ('id','name','latitude','longitude','description','familyFriendly','durationOfVisit','parking','averageRate')
   
-attraction_schema = AttractionSchema()
-attractions_schema = AttractionSchema(many=True)
+# attraction_schema = AttractionSchema()
+# attractions_schema = AttractionSchema(many=True)
   
 
 
-@app.route("/")
-@app.route("/home")
-def home():
-    return render_template('home.html', posts=posts)
+# @app.route("/")
+# @app.route("/home")
+# def home():
+#     return render_template('home.html', posts=posts)
 
 
-@app.route("/about")
-def about():
-    return render_template('about.html', title='About')
+# @app.route("/about")
+# def about():
+#     return render_template('about.html', title='About')
 
 
 # @app.route("/register", methods=['GET', 'POST'])
