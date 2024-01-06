@@ -12,7 +12,6 @@ export function parseJwt(token) {
       })
       .join("")
   );
-
   return JSON.parse(jsonPayload);
 }
 export function getUsername() {
@@ -20,21 +19,25 @@ export function getUsername() {
   if (user == null) {
     return;
   }
-  const name =
-    parseJwt(user)[
-      "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"
-    ];
-
-  return name;
+  const username=parseJwt(user)?.username
+  console.log(username)
+  return username;
 }
 export function getUserId() {
   var user = localStorage.getItem("token");
   if (user == null) {
     return;
   }
-  const id =
-    parseJwt(user)[
-      "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
-    ];
+  const id=parseJwt(user)?.id
+  console.log(id)
   return id;
+}
+export function getExpiration() {
+  var user = localStorage.getItem("token");
+  if (user == null) {
+    return;
+  }
+  const exp=parseJwt(user)?.exp
+  console.log(exp)
+  return exp;
 }

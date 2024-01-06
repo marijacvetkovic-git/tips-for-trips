@@ -7,7 +7,6 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 // import Register from './components/Register';
 // import Preferences from './components/Preferences';
-import Proba from './components/Proba';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

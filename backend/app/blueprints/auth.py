@@ -97,7 +97,7 @@ def createRelationship_WANTS_TO_SEE():
     
     
 
-@auth.route('/newUsercoldStartRecommendation/<string:userId>', methods=['GET']) 
+@auth.route('/newUsercoldStartRecommendation/<string:userId>', methods=['POST']) 
 def newUsercoldStartRecommendation(userId):
     #TODO: Poziva se prilikom registracije korisnika
     query=f""" MATCH (u:User)-[:WANTS_TO_SEE]->(h:Hashtag)<-[:HAS_HASHTAG]-(a:Attraction) WHERE u.id="{userId}"

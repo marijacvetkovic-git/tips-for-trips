@@ -288,7 +288,21 @@ def searchEngineCity(userId):
     results = attractions_schema.dump(listOfResults)
     return jsonify(results)   
 
-    
+@user.route('/searchEngineNotLoggedIn/<string:searchText>',methods=['GET']) 
+def searchEngineNotLoggedIn(searchText):
+    query=f""" WITH toLower("{searchText}") as searchText
+    MATCH (c:City)-[:HAS_ATTRACTION]->(a:Attraction)
+    WHERE toLower(c.name) = searchText
+    OR toLower(a.name) STARTS WITH searchText
+    OR toLower(a.name) CONTAINS searchText
+    OR toLower(a.description) CONTAINS searchText
+    WITH a,CASE WHEN toLower(c.name) = searchText THEN 1 ELSE 0 END as cityExists,
+    CASE WHEN toLower(a.name) STARTS WITH searchText THEN 1 ELSE 0 END as nameStartsWith,
+    CASE WHEN toLower(a.name) CONTAINS searchText THEN 1 ELSE 0 END as nameContains
+    RETURN a.id,a.name, cityExists, nameStartsWith,nameContains
+    """
+    listOfResult=list(db.execute_and_fetch(query))
+    return jsonify(listOfResult)
 
     
     

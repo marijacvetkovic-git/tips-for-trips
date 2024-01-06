@@ -4,7 +4,6 @@ import { Button, Checkbox, Form, Input,Modal,message } from 'antd';
 
 
 import axios from "axios";
-import Preferences from "./Preferences";
 
 function Register()
 {
@@ -75,6 +74,12 @@ function Register()
          )
      .catch(error=>{console.error('Error:', error);
      });
+}
+    const onLogIn =()=>{
+     setIsModalOpen(false)
+     window.location="/login"
+
+
 }
    return(
     <Modal  title="Sign up now!" open={isModalOpen} onOk={handleSubmit} onCancel={handleCancel}>
@@ -170,7 +175,9 @@ function Register()
         </div>        
 
        </form>
-
+     <Button type="link" htmlType="button" onClick={onLogIn}>
+            Already have an account? Log in 
+          </Button>
     </section>
     </article>
      </Modal>
