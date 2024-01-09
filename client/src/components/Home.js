@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import axios from "axios";
 import {getUserId} from "../utils"
-import { Card,Space } from 'antd';
+import { Card,Space,Input } from 'antd';
 
 const { Meta } = Card;
+const {Search}=Input;
 const cardStyle = {
   width: 620,
 };
@@ -57,9 +58,14 @@ const Home=()=>{
         console.log(id)
         navigate('/attraction', { state: id });
     }
+    const handleOnSearch=(value, _e) => {
+        console.log(value)
+        navigate('/search', { state: value });
+    };
    
     return(
         <>
+        <Search style={{marginBottom:"50px"}} placeholder="Search" onSearch={handleOnSearch} enterButton />
          <Space size={[8, 16]} wrap>
             {listOfAttractions && listOfAttractions.map((item) => (
                   <Card

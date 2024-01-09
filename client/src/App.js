@@ -2,14 +2,14 @@
 import './App.css';
 import {BrowserRouter as Router,Routes,Route,Link} from "react-router-dom"
 import MenuItem from "antd/es/menu/MenuItem";
-import axios from 'axios';
 import Register from './components/Register'
 import Home from './components/Home'
 import LogIn from './components/LogIn';
 import Attraction from './components/Attraction'
+import SearchAttractions from './components/SearchAttractions';
 import {useState} from 'react'
 import React from 'react';
-import { Layout, Menu, theme,Input } from 'antd';
+import { Layout, Menu, theme } from 'antd';
 import { getExpiration, getUsername } from './utils';
 import {
   LoginOutlined,
@@ -18,45 +18,42 @@ import {
   HeartOutlined,
 } from "@ant-design/icons"; 
 import Preferences from './components/Preferences';
-const { Search } = Input;
-
+import { useNavigate } from 'react-router';
 
 const { Header, Content, Footer } = Layout;
+
 function App() {
-const handleOnSearch=(value, _e, info) => {
-      console.log(value)
-      axios.get(`http://127.0.0.1:5000/user/searchEngineNotLoggedIn/${value}`)
-      .then(responce=>{
-        if(responce.status===200)
-        {
-          console.log(responce.data)
-        }
-      })
-      };
-const {
+  const username=getUsername();
+  const [seeSearch,setSeeSearch]=useState(true)
+
+
+  const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
+
   const logOut=()=>{
     localStorage.removeItem("token");
     window.location = "/";
   }
+
   const isTokenExpired = () => {
     let exp=getExpiration()
     exp = exp * 1000;
     const currentTime = new Date().getTime();
-  if(currentTime >= exp)
-  {
-    localStorage.removeItem("token");
-    window.location = "/";
-  }
+
+    if(currentTime >= exp)
+    {
+      localStorage.removeItem("token");
+      window.location = "/";
+    }
 
   };
+
   useState(()=>{
     isTokenExpired()
   })
 
 
-  const username = getUsername();
 
   return (
     <Router>
@@ -100,12 +97,6 @@ const {
         </MenuItem>
         )
 }
- <MenuItem
-        key={"3"}
-        style={{alignSelf:"right"}}
-        >
-        <Search style={{marginTop:"20px"}} placeholder="Input search text" onSearch={handleOnSearch} enterButton />
-        </MenuItem>
         </Menu>
       </Header>
       <Content
@@ -129,7 +120,10 @@ const {
               <Route path="/preferences" element={<Preferences />} />
               <Route path="/login" element={<LogIn/>}/>
               <Route path="/attraction" element={<Attraction/>}/>
+              <Route path="/search" element={<SearchAttractions/>}/>
+
          </Routes>
+
         </div>
 
       </Content>

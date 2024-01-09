@@ -167,126 +167,140 @@ def planTrip():
     results = attractions_schema.dump(recommendAttractions)
     return jsonify(results)
     
-@user.route('/serachEngineAll/<string:userId>', methods=['POST','GET'])
-def serachEngineAll(userId):
+@user.route('/searchEngineAll/<string:userId>/<string:searchText>', methods=['GET'])
+@jwt_required()
+
+def searchEngineAll(userId,searchText):
     # userId="9f130ecc-ab78-4d07-964a-1a38bc131675"
     # istorija,musteseeplaces,cultutralHeirtage,zabava
     listOfHashtags=list(db.execute_and_fetch(query=f""" MATCH (u:User)-[r:WANTS_TO_SEE]->(h:Hashtag) WHERE u.id="{userId}" return h.name """))
     useeWantsToSeehashtag=[item["h.name"] for item in listOfHashtags]
 
-    dummyString="c"
+    
     query=f"""
-    WITH toLower("{dummyString}") as dummystring
+    WITH toLower("{searchText}") as searchText
     MATCH (c:City)-[:HAS_ATTRACTION]->(a:Attraction)
-    WHERE toLower(c.name) = dummystring
-    OR toLower(a.name) STARTS WITH dummystring
-    OR toLower(a.name) CONTAINS dummystring
-    OR toLower(a.description) CONTAINS dummystring
-    WITH a,CASE WHEN toLower(c.name) = dummystring THEN 1 ELSE 0 END as cityExists,
-    CASE WHEN toLower(a.name) STARTS WITH dummystring THEN 1 ELSE 0 END as nameStartsWith,
-    CASE WHEN toLower(a.name) CONTAINS dummystring THEN 1 ELSE 0 END as nameContains
+    WHERE toLower(c.name) = searchText
+    OR toLower(a.name) STARTS WITH searchText
+    OR toLower(a.name) CONTAINS searchText
+    OR toLower(a.description) CONTAINS searchText
+    WITH a,CASE WHEN toLower(c.name) = searchText THEN 1 ELSE 0 END as cityExists,
+    CASE WHEN toLower(a.name) STARTS WITH searchText THEN 1 ELSE 0 END as nameStartsWith,
+    CASE WHEN toLower(a.name) CONTAINS searchText THEN 1 ELSE 0 END as nameContains
     OPTIONAL MATCH (a)-[r:HAS_HASHTAG]-(h:Hashtag)
     WHERE h.name IN {useeWantsToSeehashtag}
     WITH a, cityExists, nameStartsWith, nameContains,COUNT(h) AS matchingHashtags
-    RETURN a, cityExists, nameStartsWith,nameContains, COALESCE(matchingHashtags, 0) AS matchingHashtags
+    RETURN a.name as name, a.id as id, cityExists, nameStartsWith,nameContains, COALESCE(matchingHashtags, 0) AS matchingHashtags
     ORDER BY cityExists DESC, nameStartsWith DESC,nameContains DESC,matchingHashtags DESC """
-    p= list(db.execute_and_fetch(query))
-    listOfResults=[item["a"] for item in p]
-    results = attractions_schema.dump(listOfResults)
-    return jsonify(results)
+    listOfResult=list(db.execute_and_fetch(query))
+    print(listOfResult[0]["name"])
+    if(len(listOfResult)==1 and listOfResult[0]["name"] is None):
+        listOfResult=[]
+    return jsonify(listOfResult)
     
-@user.route('/searchEngineAttractionName/<string:userId>', methods=['POST','GET'])
-def searchEngineAttractionName(userId):
+@user.route('/searchEngineAttractionName/<string:userId>/<string:searchText>', methods=['GET'])
+@jwt_required()
+
+def searchEngineAttractionName(userId,searchText):
     # userId="9f130ecc-ab78-4d07-964a-1a38bc131675"
     listOfHashtags=list(db.execute_and_fetch(query=f""" MATCH (u:User)-[r:WANTS_TO_SEE]->(h:Hashtag) WHERE u.id="{userId}" return h.name """))
     userWantsToSeehashtag=[item["h.name"] for item in listOfHashtags]
-    dummyString="va"
 
     query=f""" 
-    WITH toLower("{dummyString}") as dummyString
-    MATCH (a:Attraction)
-    WHERE toLower(a.name) CONTAINS dummyString
-    OR toLower(a.description) CONTAINS dummyString
-    WITH a,
-        CASE WHEN toLower(a.name) STARTS WITH dummyString THEN 1 ELSE 0 END as startsWithString,
-        CASE WHEN toLower(a.name) CONTAINS dummyString THEN 1 ELSE 0 END as containsString,
-        CASE WHEN toLower(a.description) STARTS WITH dummyString THEN 1 ELSE 0 END as descStartsWithString,
-        CASE WHEN toLower(a.description) CONTAINS dummyString THEN 1 ELSE 0 END as descContainsString,
-        dummyString
-    WITH a, startsWithString, containsString, descStartsWithString, descContainsString, dummyString
-    OPTIONAL MATCH (a)-[r:HAS_HASHTAG]-(h:Hashtag)
-    WHERE h.name IN {userWantsToSeehashtag}
-    AND (toLower(a.name) CONTAINS dummyString OR toLower(a.description) CONTAINS dummyString)
-    WITH a, startsWithString, containsString, descStartsWithString, descContainsString, dummyString, COUNT(h) AS matchingHashtags, h
-    RETURN a, startsWithString, containsString, descStartsWithString, descContainsString, COUNT(h) AS matchingHashtags, a.averageRate
-    ORDER BY startsWithString DESC, containsString DESC, descStartsWithString DESC, descContainsString DESC, a.averageRate DESC
+    WITH toLower("{searchText}") as searchText
+MATCH (a:Attraction)
+WHERE toLower(a.name) CONTAINS searchText
+   OR toLower(a.description) CONTAINS searchText
+WITH a,
+    CASE WHEN toLower(a.name) STARTS WITH searchText THEN 1 ELSE 0 END as startsWithString,
+    CASE WHEN toLower(a.name) CONTAINS searchText THEN 1 ELSE 0 END as containsString,
+    CASE WHEN toLower(a.description) STARTS WITH searchText THEN 1 ELSE 0 END as descStartsWithString,
+    CASE WHEN toLower(a.description) CONTAINS searchText THEN 1 ELSE 0 END as descContainsString,
+    searchText
+WITH a, startsWithString, containsString, descStartsWithString, descContainsString, searchText
+OPTIONAL MATCH (a)-[r:HAS_HASHTAG]-(h:Hashtag)
+WHERE h.name IN {userWantsToSeehashtag}
+  AND (toLower(a.name) CONTAINS searchText OR toLower(a.description) CONTAINS searchText)
+WITH a, startsWithString, containsString, descStartsWithString, descContainsString, searchText, COUNT(h) AS matchingHashtags
+RETURN a.name as name ,a.id as id, startsWithString, containsString, descStartsWithString, descContainsString, matchingHashtags, a.averageRate
+ORDER BY startsWithString DESC, containsString DESC, descStartsWithString DESC, descContainsString DESC, a.averageRate DESC;
 
     """
-    p= list(db.execute_and_fetch(query))
-    listOfResults=[item["a"] for item in p]
-    results = attractions_schema.dump(listOfResults)
-    return jsonify(results)
+    listOfResult=list(db.execute_and_fetch(query))
+    print(listOfResult[0]["name"])
+    if(len(listOfResult)==1 and listOfResult[0]["name"] is None):
+        listOfResult=[]
+    return jsonify(listOfResult)
     
-@user.route('/searchEngineHashTag/<string:userId>', methods=['POST','GET'])
-def searchEngineHashTag(userId):
+@user.route('/searchEngineHashtag/<string:userId>/<string:searchText>', methods=['GET'])
+@jwt_required()
+def searchEngineHashTag(userId,searchText):
     # userId="9f130ecc-ab78-4d07-964a-1a38bc131675"
     listOfHashtags=list(db.execute_and_fetch(query=f""" MATCH (u:User)-[r:WANTS_TO_SEE]->(h:Hashtag) WHERE u.id="{userId}" return h.name """))
     userWantsToSeehashtag=[item["h.name"] for item in listOfHashtags]
-    dummyString="ist"
+    # searchText="ist"
     query=f""" 
-    WITH toLower("{dummyString}") AS dummyString
+    WITH toLower("{searchText}") AS searchText
     MATCH (a:Attraction)-[:HAS_HASHTAG]->(h:Hashtag) 
-    WHERE toLower(h.name) STARTS WITH dummyString 
+    WHERE toLower(h.name) STARTS WITH searchText 
     WITH a, collect(h.name) as hashtags
     with a, REDUCE(s = 0, i IN hashtags | s + CASE WHEN i IN {userWantsToSeehashtag} THEN 1 ELSE 0 END) AS rezultat
-    RETURN a,rezultat,a.averageRate
+    RETURN a.id as id, a.name as name ,rezultat,a.averageRate
     ORDER BY rezultat DESC, a.averageRate DESC
  """
-    p= list(db.execute_and_fetch(query))
-    listOfResults=[item["a"] for item in p]
-    results = attractions_schema.dump(listOfResults)
-    return jsonify(results)
+    listOfResult=list(db.execute_and_fetch(query))
+    print(listOfResult[0]["name"])
+    if(len(listOfResult)==1 and listOfResult[0]["name"] is None):
+        listOfResult=[]
+    return jsonify(listOfResult)
 
-@user.route('/searchEngineActivity/<string:userId>', methods=['POST','GET'])
-def searchEngineActivity(userId):
+@user.route('/searchEngineActivity/<string:userId>/<string:searchText>', methods=['GET'])
+@jwt_required()
+
+def searchEngineActivity(userId,searchText):
     # userId="9f130ecc-ab78-4d07-964a-1a38bc131675"
     listOfHashtags=list(db.execute_and_fetch(query=f""" MATCH (u:User)-[r:WANTS_TO_SEE]->(h:Hashtag) WHERE u.id="{userId}" return h.name """))
-    userWantsToSeehashtag=[item["h.name"] for item in listOfHashtags]
-    dummyString="p"
+    # userWantsToSeehashtag=[item["h.name"] for item in listOfHashtags]
+    # searchText="p"
     query=f""" 
-    WITH toLower("{dummyString}") AS dummyString
+    WITH toLower("{searchText}") AS searchText
     MATCH (a:Attraction)-[:HAS_ACTIVITY]->(h:Activity) 
-    WHERE toLower(h.name) STARTS WITH dummyString 
+    WHERE toLower(h.name) STARTS WITH searchText 
     with a, collect(h.name) as activities
 
-    RETURN a  ,a.averageRate,activities
+    RETURN a.name as name , a.id as id ,a.averageRate,activities
     ORDER BY  a.averageRate DESC
  """
-    p= list(db.execute_and_fetch(query))
-    listOfResults=[item["a"] for item in p]
-    results = attractions_schema.dump(listOfResults)
-    return jsonify(results)
+ 
+    listOfResult=list(db.execute_and_fetch(query))
+    print(listOfResult[0]["name"])
+    if(len(listOfResult)==1 and listOfResult[0]["name"] is None):
+        listOfResult=[]
+    return jsonify(listOfResult)
     
-@user.route('/searchEngineCity/<string:userId>', methods=['POST','GET'])
-def searchEngineCity(userId):
+@user.route('/searchEngineCity/<string:userId>/<string:searchText>', methods=['GET'])
+@jwt_required()
+
+def searchEngineCity(userId,searchText):
     # userId="9f130ecc-ab78-4d07-964a-1a38bc131675"
     listOfHashtags=list(db.execute_and_fetch(query=f""" MATCH (u:User)-[r:WANTS_TO_SEE]->(h:Hashtag) WHERE u.id="{userId}" return h.name """))
     userWantsToSeehashtag=[item["h.name"] for item in listOfHashtags]
-    dummyString="Nis"
+    # searchText="Nis"
     query=f""" 
-    WITH toLower("{dummyString}") AS dummyString
+    WITH toLower("{searchText}") AS searchText
     MATCH (a:Attraction)<-[:HAS_ATTRACTION]-(c:City) 
-    WHERE toLower(c.name) = dummyString 
+    WHERE toLower(c.name) = searchText 
     OPTIONAL MATCH (a)-[r:HAS_HASHTAG]-(h:Hashtag)
     WHERE h.name IN {userWantsToSeehashtag}
     WITH a,COUNT(h) AS matchingHashtags
-    RETURN a, COALESCE(matchingHashtags, 0) AS matchingHashtags
+    RETURN a.name as name, a.id as id , COALESCE(matchingHashtags, 0) AS matchingHashtags
     ORDER BY matchingHashtags DESC, a.averageRate DESC
  """
-    p= list(db.execute_and_fetch(query))
-    listOfResults=[item["a"] for item in p]
-    results = attractions_schema.dump(listOfResults)
-    return jsonify(results)   
+    listOfResult=list(db.execute_and_fetch(query))
+    print(listOfResult[0]["name"])
+    if(len(listOfResult)==1 and listOfResult[0]["name"] is None):
+        listOfResult=[]
+    return jsonify(listOfResult)  
 
 @user.route('/searchEngineNotLoggedIn/<string:searchText>',methods=['GET']) 
 def searchEngineNotLoggedIn(searchText):
@@ -299,7 +313,7 @@ def searchEngineNotLoggedIn(searchText):
     WITH a,CASE WHEN toLower(c.name) = searchText THEN 1 ELSE 0 END as cityExists,
     CASE WHEN toLower(a.name) STARTS WITH searchText THEN 1 ELSE 0 END as nameStartsWith,
     CASE WHEN toLower(a.name) CONTAINS searchText THEN 1 ELSE 0 END as nameContains
-    RETURN a.id,a.name, cityExists, nameStartsWith,nameContains
+    RETURN a.id as id ,a.name as name, cityExists, nameStartsWith,nameContains
     """
     listOfResult=list(db.execute_and_fetch(query))
     return jsonify(listOfResult)
