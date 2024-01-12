@@ -50,6 +50,7 @@ const SearchAttractions=()=>
      });
     else{
           const id=getUserId()
+          console.log(typeOfSearch)
          axios.get(`http://127.0.0.1:5000/user/searchEngine${typeOfSearch}/${id}/${value}`,{ headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } })
         .then(responce=>{
             if(responce.status===200)

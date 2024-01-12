@@ -7,6 +7,44 @@ import axios from "axios";
 
 function Register()
 {
+     useEffect(()=>{
+          if ("geolocation" in navigator) {
+            // Get the user's current location
+            navigator.geolocation.getCurrentPosition(
+              function (position) {
+                // The user's latitude and longitude are in position.coords.latitude and position.coords.longitude
+                const Clatitude = position.coords.latitude;
+                const Clongitude = position.coords.longitude;
+               setLatitude(Clatitude)
+               setLongitude(Clongitude)
+
+                console.log(`Latitude: ${Clatitude}, Longitude: ${Clongitude}`);
+              },
+              function (error) {
+                // Handle errors, if any
+                switch (error.code) {
+                  case error.PERMISSION_DENIED:
+                    console.error("User denied the request for geolocation.");
+                    break;
+                  case error.POSITION_UNAVAILABLE:
+                    console.error("Location information is unavailable.");
+                    break;
+                  case error.TIMEOUT:
+                    console.error(
+                      "The request to get user location timed out."
+                    );
+                    break;
+                  case error.UNKNOWN_ERROR:
+                    console.error("An unknown error occurred.");
+                    break;
+                }
+              }
+            );
+          } else {
+            console.error("Geolocation is not available in this browser.");
+          }
+
+     },[])
      const navigate = useNavigate();
 
      const [isModalOpen, setIsModalOpen] = useState(true);
@@ -62,10 +100,16 @@ function Register()
                     setUsernameError(response.data["errors"]["username"])
                else 
                     setUsernameError("")
-               if(response.data["errors"]["email"])
-                    setEmailError(response.data["errors"]["email"])
+               if(response.data["errors"]["password"])
+                    setPasswordError(response.data["errors"]["password"])
                else
-                    setEmailError("")
+                    setPasswordError("")
+                if (response.data["errors"]["confirm_password"])
+                  setConfirm_passwordError(response.data["errors"]["confirm_password"]);
+                else setConfirm_passwordError("");
+               if (response.data["errors"]["email"])
+                 setEmailError(response.data["errors"]["email"]);
+               else setEmailError("");
                if(response.data["errors"]["dateofbirth"])
                     setDateOfBirthError(response.data["errors"]["dateofbirth"])
                else
@@ -82,108 +126,102 @@ function Register()
 
 
 }
-   return(
-    <Modal  title="Sign up now!" open={isModalOpen} onOk={handleSubmit} onCancel={handleCancel}>
-    <article  className="article-register">
-    <section className="wrapper">
-     <div className="form-register"></div>
-     <header>Signup</header>
-       <form >
-        <div className="form-control">
-            <input type="text"
-            className="input-register"
-            placeholder="Username"
-            id="username"
-            name="username"
-            value={username}
-            required
-            onChange={(e)=>setUsername(e.target.value)}
-             />
-             {usernameError && <div className="error">{usernameError}</div>}
-        </div>
-        <div className="form-control">
-            <input type="email"
-            className="input-register"
-            placeholder="Email"
-            id="email"
-            name="email"
-            value={email}
-            required
-            onChange={(e)=>setEmail(e.target.value)}
-             />
-             {emailError && <div className="error">{emailError}</div>}
-        </div>
+   return (
+     <Modal
+       title="Sign up now!"
+       open={isModalOpen}
+       onOk={handleSubmit}
+       onCancel={handleCancel}
+     >
+       <article className="article-register">
+         <section className="wrapper">
+           <div className="form-register"></div>
+           <header>Signup</header>
+           <form>
+             <div className="form-control">
+               <input
+                 type="text"
+                 className="input-register"
+                 placeholder="Username"
+                 id="username"
+                 name="username"
+                 value={username}
+                 required
+                 
+                 onChange={(e) => setUsername(e.target.value)}
+               />
+               {usernameError && <div className="error">{usernameError}</div>}
+             </div>
+             <div className="form-control">
+               <input
+                 type="email"
+                 className="input-register"
+                 placeholder="Email"
+                 id="email"
+                 name="email"
+                 value={email}
+                 required
+                 onChange={(e) => setEmail(e.target.value)}
+               />
+               {emailError && <div className="error">{emailError}</div>}
+             </div>
 
-        <div className="form-control">
-            <input type="password"
-            className="input-register"
-            placeholder="Password"
-            id="password"
-            name="password"
-            value={password}
-            required
-            onChange={(e)=>setPassword(e.target.value)}
-             />
-             {passwordError && <div className="error">{passwordError}</div>}
-        </div>
              <div className="form-control">
-            <input type="password"
-            className="input-register"
-            placeholder="Confirm password"
-            id="confirm_password"
-            name="confirm_password"
-            value={confirm_password}
-            required
-            onChange={(e)=>setConfirm_password(e.target.value)}
-             />
-             {confirm_passwordError && <div className="error">{confirm_passwordError}</div>}
-        </div>
+               <input
+                 type="password"
+                 className="input-register"
+                 placeholder="Password"
+                 id="password"
+                 name="password"
+                 value={password}
+                 required
+                 onChange={(e) => setPassword(e.target.value)}
+               />
+               {passwordError && <div className="error">{passwordError}</div>}
+             </div>
              <div className="form-control">
-            <input type="date"
-            className="input-register"
-            placeholder="Date of birth"
-            id="dateOfBirth"
-            name="dateOfBirth"
-            value={dateOfBirth}
-            required
-            onChange={(e)=>setDateOfBirth(e.target.value)}
-             />
-             {dateOfBirthError && <div className="error">{dateOfBirthError}</div>}
-        </div>
+               <input
+                 type="password"
+                 className="input-register"
+                 placeholder="Confirm password"
+                 id="confirm_password"
+                 name="confirm_password"
+                 value={confirm_password}
+                 required
+                 onChange={(e) => setConfirm_password(e.target.value)}
+               />
+               {confirm_passwordError && (
+                 <div className="error">{confirm_passwordError}</div>
+               )}
+             </div>
              <div className="form-control">
-            <input type="number"
-            className="input-register"
-            placeholder="Longitude"
-            id="longitude"
-            name="longitude"
-            value={longitude}
-            required
-            onChange={(e)=>setLongitude(e.target.value)}
-             />
-             {longitudeError && <div className="error">{longitudeError}</div>}
-        </div>
-        <div className="form-control">
-            <input type="number"
-            className="input-register"
-            placeholder="Latitude"
-            id="latitude"
-            name="latitude"
-            value={latitude}
-            required
-            onChange={(e)=>setLatitude(e.target.value)}
-             />
-             {latitudeError && <div className="error">{latitudeError}</div>}
-        </div>        
-
-       </form>
-     <Button type="link" htmlType="button" onClick={onLogIn}>
-            Already have an account? Log in 
-          </Button>
-    </section>
-    </article>
+               <input
+                 type="date"
+                 className="input-register"
+                 placeholder="Date of birth"
+                 id="dateOfBirth"
+                 name="dateOfBirth"
+                 value={dateOfBirth}
+                 required
+                 onChange={(e) => setDateOfBirth(e.target.value)}
+               />
+               {dateOfBirthError && (
+                 <div className="error">{dateOfBirthError}</div>
+               )}
+             </div>
+             <div className="form-control">
+               {longitudeError && <div className="error">{longitudeError}</div>}
+             </div>
+             <div className="form-control">
+               {latitudeError && <div className="error">{latitudeError}</div>}
+             </div>
+           </form>
+           <Button type="link" htmlType="button" onClick={onLogIn}>
+             Already have an account? Log in
+           </Button>
+         </section>
+       </article>
      </Modal>
-
-
    );
 }
 export default Register

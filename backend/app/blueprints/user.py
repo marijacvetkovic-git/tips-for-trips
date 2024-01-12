@@ -110,8 +110,7 @@ def planTrip():
     pickedM=float(pickedKm)*1000
     
     query=""
-    if (int(pickedKm))==-1:
-        pickedM=sys.float_info.max
+
     
     whereConditions=[]
     
@@ -157,11 +156,11 @@ def planTrip():
                 sin((a.longitude - {longitude}) * 3.14 / 360)
             )
         ) AS udaljenost """
-    if (int(pickedKm)!=-1):
+    if (int(pickedKm)!=0):
         query+=f"""WHERE udaljenost<{pickedM}"""
         
     if(duration):
-        if (int(pickedKm)==-1):
+        if (int(pickedKm)==0):
             query+=f"""WHERE """
         else:
             query+=f"""AND """
@@ -331,6 +330,7 @@ def searchEngineNotLoggedIn(searchText):
     CASE WHEN toLower(a.name) STARTS WITH searchText THEN 1 ELSE 0 END as nameStartsWith,
     CASE WHEN toLower(a.name) CONTAINS searchText THEN 1 ELSE 0 END as nameContains
     RETURN a.id as id ,a.name as name, cityExists, nameStartsWith,nameContains
+    ORDER BY cityExists DESC ,nameStartsWith DESC ,nameContains DESC
     """
     listOfResult=list(db.execute_and_fetch(query))
     return jsonify(listOfResult)

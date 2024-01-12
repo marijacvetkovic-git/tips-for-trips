@@ -61,16 +61,19 @@ axios.post("http://127.0.0.1:5000/auth/createRelationship_WANTS_TO_SEE",realtion
 .then(responce=>{
   if(responce.status===200)
   {
-    axios.post(`http://127.0.0.1:5000/auth/newUsercoldStartRecommendation/${idOfUser}`)
-    .then(resp=>{
-      if(resp.status===200)
-      {
-        setLoading(false);
-        finishedRegistration()
-      }
-    })
-     .catch(error=>{console.error('Error:', error);
-     });
+    axios
+      .post(
+        `http://127.0.0.1:5000/auth/newUsercoldStartRecommendation/${idOfUser}`
+      )
+      .then((resp) => {
+        if (resp.status === 200) {
+          setLoading(false);
+          finishedRegistration();
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
   
   }
 })

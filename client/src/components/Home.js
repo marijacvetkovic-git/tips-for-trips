@@ -78,7 +78,7 @@ const Home = () => {
           });
       }
     }
-  });
+  }, [nearYou]);
 
   const handleOnClick = (id) => {
     console.log(id);

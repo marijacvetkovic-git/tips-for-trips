@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
 import { Image, List } from "antd";
@@ -6,8 +6,8 @@ import { Carousel } from "antd";
 import { Button, Modal, Space } from "antd";
 import { Col, Divider, Row } from "antd";
 const style = {
-  background: "#0092ff",
-  padding: "8px 0",
+  // height:"50vh",
+  // width:"50vw",
 };
 
 const Attraction = () => {
@@ -16,32 +16,23 @@ const Attraction = () => {
   const [attractionName, setAttractionName] = useState("");
   const [attractionDescription, setAttractionDescription] = useState("");
   const [attractionActivities, setAttractionActivities] = useState([]);
-  const [attractionRelationship,setAttractionRelationship]=useState([]);
-  const [attractionHashtags,setAttractionHashtags]=useState([]);
+  const [attractionRelationship, setAttractionRelationship] = useState([]);
+  const [attractionHashtags, setAttractionHashtags] = useState([]);
 
-  const onChange = (currentSlide) => {
-    console.log(currentSlide);
-  };
+ const onChange = (current) => {
+   console.log(`Current slide: ${current}`);
+ };
 
-  const contentStyle = {
-    verticalAlign: "middle",
-    // textAlign: "center",
-    //         lineHeight: "100vh",
-    width: "30vw",
-    height: "50vh",
-    backgroundColor: "green",
-    marginLeft: "30vw",
-    //   lineHeight: "160px",
-    //   background: "#364d79",
-  };
+ const contentStyle = {
+   objectFit: "fill",
+ };
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState("");
-  const [modalTitle,setModalTitle]=useState("")
-  const showModal = (item,content) => {
-    console.log(content)
-    let experience="not needed"
-    if(content.experience==true)
-        experience="needed"
+  const [modalTitle, setModalTitle] = useState("");
+  const showModal = (item, content) => {
+    console.log(content);
+    let experience = "not needed";
+    if (content.experience == true) experience = "needed";
 
     setModalContent(
       <>
@@ -52,16 +43,16 @@ const Attraction = () => {
         Age limit between {content.minAge}-{content.maxAge}
       </>
     );
-    setModalTitle(item)
+    setModalTitle(item);
     setIsModalOpen(true);
   };
   const handleOk = () => {
     setIsModalOpen(false);
   };
-// const onHashtag=()=>{}
-  useState(() => {
+  // const onHashtag=()=>{}
+  useEffect(() => {
     console.log(localStorage.getItem("token"));
-    console.log(attractionId)
+    console.log(attractionId);
     axios
       .get(`http://127.0.0.1:5000/helpers/returnAttraction/${attractionId}`)
       .then((responce) => {
@@ -71,43 +62,90 @@ const Attraction = () => {
           setAttractionDescription(responce.data[0]["description"]);
           setAttractionActivities(responce.data[0]["activities"]);
           setAttractionRelationship(responce.data[0]["relationship"]);
-          setAttractionHashtags(responce.data[0]["hashtags"])
+          setAttractionHashtags(responce.data[0]["hashtags"]);
           console.log(responce.data[0]["hashtags"]);
         }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
       });
   }, []);
+   const [currentSlide, setCurrentSlide] = useState(0);
+
+   const images = [
+     "./assets/6ed922df-8026-44c3-93ae-09ed6a9128a5__1.jpg",
+     "./assets/6ed922df-8026-44c3-93ae-09ed6a9128a5__2.jpg",
+     "./assets/6ed922df-8026-44c3-93ae-09ed6a9128a5__3.jpg",
+     "./assets/6ed922df-8026-44c3-93ae-09ed6a9128a5__4.jpg",
+     "./assets/6ed922df-8026-44c3-93ae-09ed6a9128a5__5.jpg",
+   ];
+
+   const nextSlide = () => {
+     setCurrentSlide((prevSlide) => (prevSlide + 1) % images.length);
+   };
+
+   const prevSlide = () => {
+     setCurrentSlide(
+       (prevSlide) => (prevSlide - 1 + images.length) % images.length
+     );
+   };
+
+    const carouselStyle = {
+      width: "60%", // Podesite željenu širinu karusela
+      margin: "auto", // Centrirajte karusel na stranici
+      overflow: "hidden",
+    };
+
+    const slideContainerStyle = {
+      display: "flex",
+      width: `${images.length * 100}%`,
+      transform: `translateX(-${currentSlide * (100 / images.length)}%)`,
+      transition: "transform 0.5s",
+    };
+
+    const imageStyle = {
+      width: `${100 / images.length}%`,
+      height: "auto",
+      flex: "0 0 auto",
+    };
   return (
     <>
       <div>
         <h1 style={{ textAlign: "center" }}>{attractionName}</h1>
       </div>
-      <div>
-        <Carousel style={{ justifyContent: "center" }} afterChange={onChange}>
-          <div>
-            <Image
-              style={contentStyle}
-              src="https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png"
+      <div style={carouselStyle}>
+        <div style={slideContainerStyle}>
+          {images.map((imageUrl, index) => (
+            <img
+              key={index}
+              src={imageUrl}
+              alt={`Slide ${index + 1}`}
+              style={imageStyle}
             />
-          </div>
-          <div>
-            <Image
-              style={contentStyle}
-              src="https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png"
-            />
-          </div>
-          <div>
-            <Image
-              style={contentStyle}
-              src="https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png"
-            />
-          </div>
-          <div>
-            <Image
-              style={contentStyle}
-              src="https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png"
-            />
-          </div>
-        </Carousel>
+          ))}
+        </div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginTop: "10px",
+          }}
+        >
+          {images.map((_, index) => (
+            <div
+              key={index}
+              onClick={() => setCurrentSlide(index)}
+              style={{
+                width: "10px",
+                height: "10px",
+                borderRadius: "50%",
+                background: currentSlide === index ? "black" : "gray",
+                margin: "0 5px",
+                cursor: "pointer",
+              }}
+            ></div>
+          ))}
+        </div>
       </div>
 
       <div>
@@ -152,7 +190,7 @@ const Attraction = () => {
             md: 24,
             lg: 32,
           }}
-          style={{marginTop:"10px"}}
+          style={{ marginTop: "10px" }}
         >
           {attractionHashtags.map((item) => (
             <Col>

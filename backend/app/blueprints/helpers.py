@@ -86,3 +86,13 @@ def getLongitudeLatitude(userId):
     query=f"""  MATCH (u:User) where u.id='{userId}' RETURN u.longitude as longitude, u.latitude as latitude"""
     resultList=list(db.execute_and_fetch(query))
     return jsonify(resultList)
+
+@helpers.route("/getUser/<string:userId>",methods=["GET"])
+def getUser(userId):
+    query=f"""  MATCH (u:User) where u.id='{userId}'
+    MATCH (u)-[r:WANTS_TO_SEE]->(h:Hashtag)
+ OPTIONAL MATCH (u)-[r1:VISITED]->(a:Attraction)
+    WITH u, COLLECT(DISTINCT h.name) as hashtags, COLLECT(DISTINCT a.name) as attractionNames, COLLECT(DISTINCT a.id) as attractionIds
+    RETURN u.username as username, u.dateOfBirth as date, u.email as email, hashtags ,attractionNames , attractionIds"""
+    resultList=list(db.execute_and_fetch(query))
+    return jsonify(resultList)

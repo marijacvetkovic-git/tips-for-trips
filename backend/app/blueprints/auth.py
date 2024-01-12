@@ -42,8 +42,8 @@ def register():
         errors = {"errors": form.errors}
         return jsonify(errors), 206
    
-@auth.route("/login/<string:username>/<string:password>", methods=['GET'])
-def login(username,password):
+@auth.route("/login/<string:username>/<string:password>/<float:latitude>/<float:longitude>", methods=['GET'])
+def login(username,password,latitude,longitude):
     form = LogInForm(
         username=username,
         password=password,
@@ -60,7 +60,9 @@ def login(username,password):
         listOfUsers=list(users)
         if not listOfUsers :
             return jsonify({"message":'Login Unsuccessful. Please check username and password'}),206
-        else:   
+        else:  
+            query=f"""MATCH (u:User) WHERE u.username='{username}' SET u.latitude={latitude} SET u.longitude={longitude} """
+            db.execute(query)
             user:User=(listOfUsers[0])['user']
             print(user.password)
             print(form.password.data)
@@ -101,14 +103,18 @@ def createRelationship_WANTS_TO_SEE():
 def newUsercoldStartRecommendation(userId):
     #TODO: Poziva se prilikom registracije korisnika
     query=f""" MATCH (u:User)-[:WANTS_TO_SEE]->(h:Hashtag)<-[:HAS_HASHTAG]-(a:Attraction) WHERE u.id="{userId}"
-    RETURN a.id
+    RETURN DISTINCT a.id
     ORDER BY a.averageRate DESC
     LIMIT 5 """
     result=list(db.execute_and_fetch(query))
     listOfAttributes = [item["a.id"] for item in result]
+    print(userId)
+    print(listOfAttributes)
     query=f""" MATCH (u:User) WHERE u.id='{userId}'
-                MATCH(a:Attraction) WHERE a.id IN {listOfAttributes}
-                MERGE(a)-[r:RECOMMENDED_FOR]->(u) 
+                MATCH (a:Attraction) WHERE a.id IN {listOfAttributes}
+                MERGE (a)-[r:RECOMMENDED_FOR]->(u) 
+                return u,r,a
+                
         """
-    db.execute(query)
-  
+    p=list(db.execute_and_fetch(query))
+    return jsonify({"message": "Success"}), 200

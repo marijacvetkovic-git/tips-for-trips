@@ -8,6 +8,8 @@ const LogIn = () => {
 const [username,setUsername]=useState("")
 const [password,setPassword]=useState("")
 const [isError,setIsError]=useState("")
+const [latitude,setLatitude]=useState(0)
+const [longitude,setLongitude]=useState(0)
 
 
 const [isModalOpen, setIsModalOpen] = useState(true);
@@ -29,7 +31,7 @@ const loggedIn = () => {
 // };
 
 const handleOk = () => {
-  axios.get(`http://127.0.0.1:5000/auth/login/${username}/${password}`)
+  axios.get(`http://127.0.0.1:5000/auth/login/${username}/${password}/${latitude}/${longitude}`)
   .then(responce=>{
     if(responce.status===200)
     {
@@ -50,89 +52,129 @@ const handleOk = () => {
     setIsModalOpen(false);
     window.location="/home"
   };
-  return(
-  <Modal  title="Log In now!" open={isModalOpen} onOk={handleOk} onCancel={handleCancel}>
-    {contextHolder}
-    {/* <section className='wrapper'> */}
-  <Form
-    name="basic"
-    className='wrapper'
-    labelCol={{
-      span: 8,
-    }}
-    wrapperCol={{
-      span: 16,
-    }}
-    style={{
-      maxWidth: 600
-    }}
-    initialValues={{
-      remember: true,
-    }}
-    // onFinish={handleOk}
-    // onFinishFailed={onFinishFailed}
-    autoComplete="off"
-  >
-    <h1 style={{marginLeft:"30vh",color:"white"
-}}>Log in</h1>
-    <Form.Item
-      label="Username"
-      name="username"
-      value={username}
-      onChange={(e)=>setUsername(e.target.value)}
 
-      rules={[
-        {
-          required: true,
-          message: 'Please input your username!',
-        },
-      ]}
+   useState(() => {
+     if ("geolocation" in navigator) {
+       // Get the user's current location
+       navigator.geolocation.getCurrentPosition(
+         function (position) {
+           // The user's latitude and longitude are in position.coords.latitude and position.coords.longitude
+           const Clatitude = position.coords.latitude;
+           const Clongitude = position.coords.longitude;
+           setLatitude(Clatitude);
+           setLongitude(Clongitude);
+
+           console.log(`Latitude: ${Clatitude}, Longitude: ${Clongitude}`);
+         },
+         function (error) {
+           // Handle errors, if any
+           switch (error.code) {
+             case error.PERMISSION_DENIED:
+               console.error("User denied the request for geolocation.");
+               break;
+             case error.POSITION_UNAVAILABLE:
+               console.error("Location information is unavailable.");
+               break;
+             case error.TIMEOUT:
+               console.error("The request to get user location timed out.");
+               break;
+             case error.UNKNOWN_ERROR:
+               console.error("An unknown error occurred.");
+               break;
+           }
+         }
+       );
+     } else {
+       console.error("Geolocation is not available in this browser.");
+     }
+   }, []);
+  return (
+    <Modal
+      title="Log In now!"
+      open={isModalOpen}
+      onOk={handleOk}
+      onCancel={handleCancel}
     >
-      <Input />
-    </Form.Item>
+      {contextHolder}
+      {/* <section className='wrapper'> */}
+      <Form
+        name="basic"
+        className="wrapper"
+        labelCol={{
+          span: 8,
+        }}
+        wrapperCol={{
+          span: 16,
+        }}
+        style={{
+          maxWidth: 600,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+        initialValues={{
+          remember: true,
+        }}
+        // onFinish={handleOk}
+        // onFinishFailed={onFinishFailed}
+        autoComplete="off"
+      >
+        <div style={{marginLeft:"100px"}}>
+          <h1 style={{ marginLeft: "50px", color: "white" }}>Log in</h1>
+          <Form.Item
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            rules={[
+              {
+                required: true,
+                message: "Please input your username!",
+              },
+            ]}
+          >
+            <Input placeholder="Username" />
+          </Form.Item>
 
-    <Form.Item
-      label="Password"
-      name="password"
-      value={password}
-      onChange={(e)=>setPassword(e.target.value)}
-      rules={[
-        {
-          required: true,
-          message: 'Please input your password!',
-        },
-      ]}
-    >
-      <Input.Password />
-    </Form.Item>
+          <Form.Item
+            name="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            rules={[
+              {
+                required: true,
+                message: "Please input your password!",
+              },
+            ]}
+          >
+            <Input.Password placeholder="Password" />
+          </Form.Item>
 
-    <Form.Item
-      name="remember"
-      valuePropName="checked"
-      wrapperCol={{
-        offset: 8,
-        span: 16,
-      }}
-    >
-      {isError && <div className="error">{isError}</div>}
+          <Form.Item
+            name="remember"
+            valuePropName="checked"
+            wrapperCol={{
+              offset: 8,
+              span: 16,
+            }}
+          >
+            {isError && <div className="error">{isError}</div>}
 
-      <Checkbox>Remember me</Checkbox>
-    </Form.Item>
+            <Checkbox>Remember me</Checkbox>
+          </Form.Item>
 
-    <Form.Item
-      wrapperCol={{
-        offset: 8,
-        span: 16,
-      }}
-    >
-      {/* <Button type="primary" htmlType="submit" onClick={handleOk}>
+          <Form.Item
+            wrapperCol={{
+              offset: 8,
+              span: 16,
+            }}
+          >
+            {/* <Button type="primary" htmlType="submit" onClick={handleOk}>
         Submit
       </Button> */}
-    </Form.Item>
-  </Form>
-  {/* </section> */}
-  </Modal>
-    
-);
+          </Form.Item>
+        </div>
+      </Form>
+      {/* </section> */}
+    </Modal>
+  );
     }
 export default LogIn;

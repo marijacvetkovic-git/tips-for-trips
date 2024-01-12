@@ -8,18 +8,16 @@ import LogIn from './components/LogIn';
 import Attraction from './components/Attraction'
 import SearchAttractions from './components/SearchAttractions';
 import PlanYourTrip from './components/PlanYourTrip';
+import Profile from './components/Profile';
 import {useState} from 'react'
 import React from 'react';
 import { Layout, Menu, theme } from 'antd';
 import { getExpiration, getUsername } from './utils';
-import {
-  LoginOutlined,
-  CrownOutlined,
-  HomeOutlined,
-  HeartOutlined,
-} from "@ant-design/icons"; 
+import { UserOutlined } from "@ant-design/icons";
+import { Avatar } from "antd";
+
+
 import Preferences from './components/Preferences';
-import { useNavigate } from 'react-router';
 
 const { Header, Content, Footer } = Layout;
 
@@ -58,93 +56,88 @@ function App() {
 
   return (
     <Router>
-      <Layout style={{minHeight:"100vh"}}>
-      <Header
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-        }}
-      >
-        <div className="demo-logo" />
-    <Menu
-          theme="dark"
-          mode="horizontal"
-          defaultSelectedKeys={"1"}
+      <Layout style={{ minHeight: "100vh" }}>
+        <Header
           style={{
-            flex: 1,
-            minWidth: 0,
-          }}
-        > 
-        <MenuItem
-        key={"1"}
-        style={{float:"left"}}
-        >
-        <Link to={"/home"}>Home</Link>
-        </MenuItem>
-        {!(localStorage.getItem("token")) ? (
-        <MenuItem
-        key={"2"}
-        style={{float:"left"}}
-        >
-          <Link to={"/register"}>Register/LogIn</Link>
-        </MenuItem>
-        ):(<>
-          <MenuItem
-        key={"2"}
-        style={{float:"left"}}
-        >
-        <Link to={"/planYourTrip"}>Plan trip</Link>
-        </MenuItem>
-
-         <MenuItem
-        key={"3"}
-        style={{float:"left"}}
-        >
-        <Link onClick={logOut}>LogOut</Link>
-        </MenuItem>
-        </>
-        )
-}
-        </Menu>
-      </Header>
-      <Content
-        style={{
-          padding: '48px 48px',
-        }}
-      >
-        <div
-          style={{
-            background: colorBgContainer,
-            minHeight: 280,
-            padding: 24,
-            borderRadius: borderRadiusLG,
+            display: "flex",
+            alignItems: "center",
           }}
         >
+          <div className="demo-logo" />
+          <Menu
+            theme="dark"
+            mode="horizontal"
+            defaultSelectedKeys={"1"}
+            style={{
+              flex: 1,
+              minWidth: 0,
+            }}
+          >
+            {localStorage.getItem("token") && (
+              <MenuItem key={"0"} style={{ float: "left" }}>
+                <Avatar
+                  style={{
+                    backgroundColor: "#87d068",
+                  }}
+                  icon={<UserOutlined />}
+                />
+                <Link to={"/profile"}></Link>
+              </MenuItem>
+            )}
+            <MenuItem key={"1"} style={{ float: "left" }}>
+              <Link to={"/home"}>Home</Link>
+            </MenuItem>
+            {!localStorage.getItem("token") ? (
+              <MenuItem key={"2"} style={{ float: "left" }}>
+                <Link to={"/register"}>Register/LogIn</Link>
+              </MenuItem>
+            ) : (
+              <>
+                <MenuItem key={"2"} style={{ float: "left" }}>
+                  <Link to={"/planYourTrip"}>Plan trip</Link>
+                </MenuItem>
 
-         <Routes>
+                <MenuItem key={"3"} style={{ float: "left" }}>
+                  <Link onClick={logOut}>LogOut</Link>
+                </MenuItem>
+              </>
+            )}
+          </Menu>
+        </Header>
+        <Content
+          style={{
+            padding: "48px 48px",
+          }}
+        >
+          <div
+            style={{
+              background: colorBgContainer,
+              minHeight: 280,
+              padding: 24,
+              borderRadius: borderRadiusLG,
+            }}
+          >
+            <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/home" element={<Home />} />
               <Route path="/register" element={<Register />} />
               <Route path="/preferences" element={<Preferences />} />
-              <Route path="/login" element={<LogIn/>}/>
-              <Route path="/attraction" element={<Attraction/>}/>
-              <Route path="/search" element={<SearchAttractions/>}/>
-              <Route path="/planYourTrip" element={<PlanYourTrip/>}/>
-              
-
-         </Routes>
-
-        </div>
-
-      </Content>
-      <Footer
-        style={{
-          textAlign: 'center',
-        }}
-      >
-        TipsForTrips ©{new Date().getFullYear()} 
-      </Footer>
-    </Layout>
+              <Route path="/login" element={<LogIn />} />
+              <Route path="/attraction" element={<Attraction />} />
+              <Route path="/search" element={<SearchAttractions />} />
+              <Route path="/planYourTrip" element={<PlanYourTrip />} />
+              <Route path="/profile" element={<Profile />} />
+            </Routes>
+          </div>
+        </Content>
+        <Footer
+          style={{
+            textAlign: "center",
+          }}
+        >
+          TipsForTrips ©{new Date().getFullYear()}
+        </Footer>
+      </Layout>
     </Router>
   );
 }
