@@ -43,6 +43,7 @@ function Register()
   };
 
     const handleSubmit=(e)=>{
+     
      e.preventDefault();
      const registrationBody = {username,email,password,confirm_password,dateOfBirth,longitude,latitude}
   

@@ -7,6 +7,7 @@ import Home from './components/Home'
 import LogIn from './components/LogIn';
 import Attraction from './components/Attraction'
 import SearchAttractions from './components/SearchAttractions';
+import PlanYourTrip from './components/PlanYourTrip';
 import {useState} from 'react'
 import React from 'react';
 import { Layout, Menu, theme } from 'antd';
@@ -87,14 +88,21 @@ function App() {
         >
           <Link to={"/register"}>Register/LogIn</Link>
         </MenuItem>
-        ):(
+        ):(<>
+          <MenuItem
+        key={"2"}
+        style={{float:"left"}}
+        >
+        <Link to={"/planYourTrip"}>Plan trip</Link>
+        </MenuItem>
 
          <MenuItem
-        key={"2"}
+        key={"3"}
         style={{float:"left"}}
         >
         <Link onClick={logOut}>LogOut</Link>
         </MenuItem>
+        </>
         )
 }
         </Menu>
@@ -121,6 +129,8 @@ function App() {
               <Route path="/login" element={<LogIn/>}/>
               <Route path="/attraction" element={<Attraction/>}/>
               <Route path="/search" element={<SearchAttractions/>}/>
+              <Route path="/planYourTrip" element={<PlanYourTrip/>}/>
+              
 
          </Routes>
 

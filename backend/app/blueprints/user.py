@@ -1,5 +1,5 @@
 import sys
-from flask import Blueprint,render_template,jsonify,flash
+from flask import Blueprint,render_template,jsonify,flash, request
 from flask_jwt_extended import jwt_required
 from app import app , bcrypt, db ,ma
 from gqlalchemy import match
@@ -65,54 +65,63 @@ WITH a,
             sin((a.longitude - {usersLongitude}) * 3.14 / 360)
         )
     ) AS udaljenost
-RETURN a, udaljenost
+RETURN a.id as id, a.name as name , udaljenost
 ORDER BY udaljenost
 LIMIT 10;
  """
           
     fetchNearestAttractions=db.execute_and_fetch(query)
     
-    listOfNearestAttractions=[]
+    # listOfNearestAttractions=[]
     listaa=list(fetchNearestAttractions)
-    print(listaa)
-    for item in listaa:
-        listOfNearestAttractions.userend(item["a"])
-    print(listOfNearestAttractions)
+    # print(listaa)
+    # for item in listaa:
+    #     listOfNearestAttractions.append(item["a"])
+    # print(listOfNearestAttractions)
     
-    results = attractions_schema.dump(listOfNearestAttractions)
-    return jsonify(results)
+    # results = attractions_schema.dump(listOfNearestAttractions)
+    return jsonify(listaa)
     
 @user.route('/planTrip', methods=['POST'])
+# @user.route('/planTrip/<string:pickedCity>/<string:pickedAct>/<string:pickedDuration>/<string:pickedKm>/<int:parking>/<int:familyFriendly>/<string:maxDest>/<string:latitude>/<string:longitude>', methods=['GET'])
 @jwt_required()
 # mislim da ovde treba da ide get ipak
 def planTrip():
-    distanceKm=1000000000000000
-    cityName="Nis" 
-    # mora destinacija da se odabere
-    usersLatitude=45
-    usersLongitude=45
-    activities=[]
-    durationH=444444
-    durationM=45
-    durationS=0
-    duration=True
-    familyFiendly=True
-    parking=True
-    # experience=True
-    maxDestinations=4
+    req_data = request.get_json()    
+    pickedCity=req_data.get("pickedCity")
+    pickedAct=req_data.get("pickedAct")
+    pickedDuration=req_data.get("pickedDuration")
+    pickedKm=req_data.get("pickedKm")
+    familyFriendly=req_data.get("familyFriendly")
+    maxDest=req_data.get("maxDest")
+    latitude=req_data.get("latitude")
+    longitude=req_data.get("longitude")
+    
+    
+    duration=False
+    parking=req_data.get("parking")
+    maxDest=(int(maxDest))
+    latitude=(float(latitude))
+    longitude=(float(longitude))
+    activities=pickedAct.split(',')
+    if(pickedDuration!=""):
+        duration=True
+        durationH, durationM, durationS = map(int, pickedDuration.split(':'))
+    pickedM=float(pickedKm)*1000
+    
     query=""
-    if distanceKm==-1:
-        distanceKm=sys.float_info.max
+    if (int(pickedKm))==-1:
+        pickedM=sys.float_info.max
     
     whereConditions=[]
     
-    query+=f"""MATCH (c:City{{name:'{cityName}'}})-[r1:HAS_ATTRACTION]->(a:Attraction)
+    query+=f"""MATCH (c:City{{id:'{pickedCity}'}})-[r1:HAS_ATTRACTION]->(a:Attraction)
     OPTIONAL MATCH (a)-[r2:HAS_ACTIVITY]->(activity:Activity)
-    WHERE size({activities}) = 0 OR (size({activities}) > 0 AND activity.name IN {activities})
+    WHERE size({activities}) = 0 OR (size({activities}) > 0 AND activity.id IN {activities})
     WITH a, COLLECT(activity) AS activitiesForAttraction,COLLECT(r2) AS rels
        """
 
-    if familyFiendly:
+    if familyFriendly:
         whereConditions.append("a.familyFriendly = true ")
         
     if parking:
@@ -124,7 +133,7 @@ def planTrip():
     query+= f""" WITH a, activitiesForAttraction,rels,
      CASE 
        WHEN size({activities}) > 0 
-       THEN REDUCE(s = 0, x IN activitiesForAttraction | s + CASE WHEN x.name IN {activities} THEN 1 ELSE 0 END)
+       THEN REDUCE(s = 0, x IN activitiesForAttraction | s + CASE WHEN x.id IN {activities} THEN 1 ELSE 0 END)
        ELSE 0
      END AS commonActivities
     WITH a, activitiesForAttraction, commonActivities,rels,
@@ -132,40 +141,48 @@ def planTrip():
      REDUCE(s = 0.0, r IN rels | s + COALESCE(toInteger(split(coalesce(toString(r.durationOfActivity), ""), ":")[0])*3600 + toInteger(split(coalesce(toString(r.durationOfActivity), ""), ":")[1])*60 + toInteger(split(coalesce(toString(r.durationOfActivity), ""), ":")[2]), 0.0))+(a.durationOfVisit.hour * 3600 + a.durationOfVisit.minute * 60 + a.durationOfVisit.second) AS totalDuration,
         6371 * 2 * atan2(
         sqrt(
-                sin((a.latitude - {usersLatitude}) * 3.14 / 360) * 
-                sin((a.latitude - {usersLatitude}) * 3.14 / 360) +
-                cos({usersLatitude} * 3.14 / 180) * 
+                sin((a.latitude - {latitude}) * 3.14 / 360) * 
+                sin((a.latitude - {latitude}) * 3.14 / 360) +
+                cos({latitude} * 3.14 / 180) * 
                 cos(a.latitude * 3.14 / 180) * 
-                sin((a.longitude - {usersLongitude}) * 3.14 / 360) * 
-                sin((a.longitude - {usersLongitude}) * 3.14 / 360)
+                sin((a.longitude - {longitude}) * 3.14 / 360) * 
+                sin((a.longitude - {longitude}) * 3.14 / 360)
             ),
         sqrt(
-                1 - sin((a.latitude - {usersLatitude}) * 3.14 / 360) * 
-                sin((a.latitude - {usersLatitude}) * 3.14 / 360) +
-                cos({usersLatitude} * 3.14 / 180) * 
+                1 - sin((a.latitude - {latitude}) * 3.14 / 360) * 
+                sin((a.latitude - {latitude}) * 3.14 / 360) +
+                cos({latitude} * 3.14 / 180) * 
                 cos(a.latitude * 3.14 / 180) * 
-                sin((a.longitude - {usersLongitude}) * 3.14 / 360) * 
-                sin((a.longitude - {usersLongitude}) * 3.14 / 360)
+                sin((a.longitude - {longitude}) * 3.14 / 360) * 
+                sin((a.longitude - {longitude}) * 3.14 / 360)
             )
-        ) AS udaljenost
-        WHERE udaljenost<{distanceKm}"""
+        ) AS udaljenost """
+    if (int(pickedKm)!=-1):
+        query+=f"""WHERE udaljenost<{pickedM}"""
         
     if(duration):
-        query+= f""" AND totalDuration < ({durationH}* 3600+{durationM}*60+{durationS})
+        if (int(pickedKm)==-1):
+            query+=f"""WHERE """
+        else:
+            query+=f"""AND """
+            
+        query+= f"""  totalDuration < ({durationH}* 3600+{durationM}*60+{durationS})
         """
     
-    query+=f"""RETURN a,totalDuration,udaljenost,commonActivities
+    query+=f"""RETURN a.id as id, a.name as name, a.averageRate as avgRate , toInteger(totalDuration/3600) as houres, toInteger((totalDuration % 3600) / 60) as minutes,toInteger(totalDuration % 60) as seconds,
+       commonActivities as matchedActivities,udaljenost/1000 as distaneInKm
+
         ORDER BY udaljenost,commonActivities DESC 
         """
-    if(maxDestinations>0):
-        query+=f"""LIMIT {maxDestinations} """
+    if(maxDest>0):
+        query+=f"""LIMIT {maxDest} """
     
     print(query)
     p=list(db.execute_and_fetch(query))
     print(p)
-    recommendAttractions=[item["a"] for item in p]
-    results = attractions_schema.dump(recommendAttractions)
-    return jsonify(results)
+    # recommendAttractions=[item["a"] for item in p]
+    # results = attractions_schema.dump(recommendAttractions)
+    return jsonify(p)
     
 @user.route('/searchEngineAll/<string:userId>/<string:searchText>', methods=['GET'])
 @jwt_required()

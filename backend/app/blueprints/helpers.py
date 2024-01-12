@@ -42,8 +42,9 @@ def returnMostRecommendedAttractions():
 def returnAttraction(id):
     query=f"""MATCH (a:Attraction) WHERE a.id='{id}'
 OPTIONAL MATCH (a)-[r:HAS_ACTIVITY]->(activity:Activity) 
- WITH a,COLLECT(activity.name) AS activitiesForAttraction,COLLECT(r) as relationship
-    return a.name,a.description,activitiesForAttraction,relationship
+OPTIONAL MATCH (a)-[r1:HAS_HASHTAG]->(h:Hashtag)
+ WITH a,COLLECT(DISTINCT activity.name) AS activitiesForAttraction,COLLECT(DISTINCT r) as relationship , COLLECT(DISTINCT h.name) as hashtags
+    return a.id as id , a.name as name ,a.description as description, a.averageRate as avgRate,activitiesForAttraction,relationship, hashtags
     """
     resultList=list(db.execute_and_fetch(query))
     listOfAttractionInformation=[]
@@ -51,14 +52,37 @@ OPTIONAL MATCH (a)-[r:HAS_ACTIVITY]->(activity:Activity)
         # hasActivity=[i.properties for i in item["relationship"]]
         hasActivity = [{k: str(v) if k == "durationOfActivity" else v for k, v in i.properties.items()} for i in item["relationship"]]
 
-        listOfAttractionInformation.append({"name":item["a.name"],"description":item["a.description"],"activities":item["activitiesForAttraction"],
-                                            "relationship":hasActivity})
-    return jsonify({"listOfAttractionInformation":listOfAttractionInformation})
+        listOfAttractionInformation.append({"name":item["name"],"description":item["description"],"avgRate":item["avgRate"],"activities":item["activitiesForAttraction"],
+                                            "relationship":hasActivity,"hashtags":item["hashtags"]})
+    return jsonify(listOfAttractionInformation)
 #  NISAM JOS ISKORISTILA FJU..A VERV BI TREBALO
 @helpers.route("/removeOldUsers",methods=["GET"])
 def removeOldUsers():
     query=f"""MATCH (user:User)
     WHERE NOT EXISTS ((:Hashtag)<-[:WANTS_TO_SEE]-(user))
     RETURN user.username"""
+    resultList=list(db.execute_and_fetch(query))
+    return jsonify(resultList)
+
+@helpers.route("/getCities",methods=["GET"])
+def getCities():
+    query=f""" MATCH (c:City)
+    RETURN c.name as name, c.id as id
+    """
+    resultList=list(db.execute_and_fetch(query))
+    return jsonify(resultList)
+
+@helpers.route("/getActivities",methods=["GET"])
+def getActivities():
+    query=f"""  MATCH (a:Activity)<-[r:HAS_ACTIVITY]-()
+    WITH DISTINCT a
+    RETURN a.name as name, a.id as id
+    """
+    resultList=list(db.execute_and_fetch(query))
+    return jsonify(resultList)
+
+@helpers.route("/getLongitudeLatitude/<string:userId>",methods=["GET"])
+def getLongitudeLatitude(userId):
+    query=f"""  MATCH (u:User) where u.id='{userId}' RETURN u.longitude as longitude, u.latitude as latitude"""
     resultList=list(db.execute_and_fetch(query))
     return jsonify(resultList)

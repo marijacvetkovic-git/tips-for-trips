@@ -56,3 +56,6 @@
     transform: rotate(360deg);
   }
 }
+.slick-list {
+  background-color:rgb(146, 161, 156);
+}
