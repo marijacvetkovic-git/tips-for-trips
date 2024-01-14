@@ -1,12 +1,52 @@
+import string
 import uuid
-from flask import Blueprint, redirect,render_template,jsonify,flash, url_for
+from flask import Blueprint, redirect,render_template,jsonify,flash, request, url_for
 from flask_jwt_extended import jwt_required
 
 from app.forms import *
-from app.models import HasActivity, HasAttraction, HasHashtag, Visited, WantsToSee
+from app.models import HasActivity, HasAttraction, HasHashtag, HasImage, Image, Visited, WantsToSee
 
 admin= Blueprint("admin",__name__,static_folder="static",template_folder="templates")
 
+@admin.route("/addImage/<string:attractionId>",methods=['POST'])
+def addImage(attractionId):
+    req_data = request.get_json() 
+    path=req_data.get("path")
+    print(path)
+    query=f""" MATCH (a:Attraction) WHERE a.id='{attractionId}'
+    OPTIONAL MATCH (a)-[r:HAS_IMAGE]->(i) WHERE i.path='{path}'
+    WITH a, COUNT(i) as images
+    return a,images """
+    p=(list(db.execute_and_fetch(query)))[0]
+    attraction:Attraction=p["a"]
+    number=p["images"]
+    if(number>0):
+        return jsonify({"error":"Path exists"}), 206
+    image:Image=Image(id=str(uuid.uuid4()),path=path)
+    image.save(db)
+    
+    HasImage(_start_node_id=attraction._id,_end_node_id=image._id).save(db)
+
+    return jsonify(),200
+
+
+# @admin.route("/getImages/<string:attractionId>",methods=['GET'])  
+# def getImages(attractionId):
+#     query=f""" MATCH (a:Attraction) WHERE a.id='{attractionId}'
+#     OPTIONAL MATCH (a)-[r:HAS_IMAGE]->(i:Image)
+#     return i.path as path
+#     """
+#     listOfImgPaths=[item["path"] for item in list(db.execute_and_fetch(query))]
+    
+#     if None in listOfImgPaths:
+#         return jsonify({"Error":"No photos"}),206
+    
+#     return jsonify(listOfImgPaths)
+        
+
+
+    
+    
 @admin.route("/addAttraction",methods=['GET','POST'])
 @jwt_required()
 
@@ -41,6 +81,7 @@ def createHashtag():
 @jwt_required()
 
 def createActivity():
+    
     form = AddActivityForm()
     if form.validate_on_submit():
         activity=Activity(id=str(uuid.uuid4()),name=form.name.data)
@@ -52,20 +93,24 @@ def createActivity():
     
     return render_template('addActivity.html', title='Add activity', form=form)
 
-@admin.route("/createCity",methods=['GET','POST'])
+@admin.route("/createCity",methods=['POST'])
 @jwt_required()
 
 def createCity():
-    form = AddCityForm()
+    req_data = request.get_json()    
+    form = AddCityForm(
+    name=req_data.get("name"),
+    description=req_data.get("description")
+        
+    )
     if form.validate_on_submit():
         city=City(id=str(uuid.uuid4()),name=form.name.data,description=form.description.data)
         city.save(db)
 
-        flash(f'Your city is added!','success')
-        return redirect(url_for('home'))
-    
-    
-    return render_template('addCity.html', title='Add city', form=form)
+        return jsonify({"Message":"Grad dodat"}),200
+    else:
+        errors = {"errors": form.errors}
+        return jsonify(errors), 206
 
 @admin.route("/createRelationship_HAS_HASHTAG",methods=['GET','POST'])
 @jwt_required()
@@ -128,15 +173,19 @@ def createRelationship_WANTS_TO_SEE():
     return render_template('addWantsToSee.html', title='Add has hastag', form=form)
 
 
-@admin.route("/createRelationship_HAS_ATTRACTION",methods=['GET','POST'])
+@admin.route("/createRelationship_HAS_ATTRACTION",methods=['POST'])
 @jwt_required()
 def createRelationship_HAS_ATTRACTION():
-    form = AddHasAttractionForm()
+    req_data = request.get_json() 
+    form = AddHasAttractionForm(
+    idOfCity=req_data.get("idOfCity"),
+    idOfAttraction=req_data.get("idOfAttraction")
+    )
     if form.validate_on_submit():
         HasAttraction(_start_node_id=form.tupleForResult[0],_end_node_id=form.tupleForResult[1]).save(db)
 
         flash(f'Your relationship is added!','success')
-        return redirect(url_for('home'))
-    
-    
-    return render_template('addHasAttraction.html', title='Add has hastag', form=form)
+        return jsonify({"Message":"Relationship has_attraction is created"}),200
+    else:
+        errors = {"errors": form.errors}
+        return jsonify(errors), 206

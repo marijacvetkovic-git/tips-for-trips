@@ -86,46 +86,100 @@ const SearchAttractions=()=>
 
 
     return (
-        <>  
-        <Search  style={{marginTop:"20px",marginBottom:"20px"}} placeholder={"Search "+ typeOfSearch} onSearch={handleOnSearch} enterButton />
+      <>
+        <Search
+          style={{ marginTop: "20px", marginBottom: "20px" }}
+          placeholder={"Search " + typeOfSearch}
+          onSearch={handleOnSearch}
+          enterButton
+        />
         <section>
-      { token ? (<> 
-      {typeOfSearch!="All" && <Button type="link" htmlType="button" onClick={()=>setTypeOfSearch("All")}>
-            #all
-          </Button>}
-          {typeOfSearch!="City" &&  <Button type="link" htmlType="button" onClick={()=>setTypeOfSearch("City")}>
-            #city
-          </Button>}
-           {typeOfSearch!="AttractionName" &&<Button type="link" htmlType="button" onClick={()=>setTypeOfSearch("AttractionName")}>
-            #attractionName
-          </Button>}
-           {typeOfSearch!="Hashtag" &&<Button type="link" htmlType="button" onClick={()=>setTypeOfSearch("Hashtag")}>
-            #hashtags
-          </Button>}
-           {typeOfSearch!="Activity" &&<Button type="link" htmlType="button" onClick={()=>setTypeOfSearch("Activity")}>
-            #activity
-          </Button>}
-          </>):(<></>)}
-          </section>
-        <Space size={[8, 16]} wrap>
-            {(listOfAttractions.length != 0) ? listOfAttractions.map((item) => (
-                  <Card
-                  hoverable
-                  value={item["id"]}
-                  id={item["id"]}
-                  style={{
-                    width: 240,
-                  }}
-                  onClick={()=>handleOnClick(item["id"])}
-                  cover={<img alt="example" src="https://os.alipayobjects.com/rmsportal/QBnOOoLaAfKPirc.png" />}
+          {token ? (
+            <>
+              {typeOfSearch != "All" && (
+                <Button
+                  type="link"
+                  htmlType="button"
+                  onClick={() => setTypeOfSearch("All")}
                 >
-                  <Meta title={item["name"]} />
-                </Card>
-              )) : <> <Empty style={{marginTop:"20px"}} /></>
-            }
-          </Space>
-          
-        </>
+                  #all
+                </Button>
+              )}
+              {typeOfSearch != "City" && (
+                <Button
+                  type="link"
+                  htmlType="button"
+                  onClick={() => setTypeOfSearch("City")}
+                >
+                  #city
+                </Button>
+              )}
+              {typeOfSearch != "AttractionName" && (
+                <Button
+                  type="link"
+                  htmlType="button"
+                  onClick={() => setTypeOfSearch("AttractionName")}
+                >
+                  #attractionName
+                </Button>
+              )}
+              {typeOfSearch != "Hashtag" && (
+                <Button
+                  type="link"
+                  htmlType="button"
+                  onClick={() => setTypeOfSearch("Hashtag")}
+                >
+                  #hashtags
+                </Button>
+              )}
+              {typeOfSearch != "Activity" && (
+                <Button
+                  type="link"
+                  htmlType="button"
+                  onClick={() => setTypeOfSearch("Activity")}
+                >
+                  #activity
+                </Button>
+              )}
+            </>
+          ) : (
+            <></>
+          )}
+        </section>
+        <Space size={[8, 16]} wrap>
+          {listOfAttractions.length != 0 ? (
+            listOfAttractions.map((item) => (
+              <Card
+                hoverable
+                value={item["id"]}
+                id={item["id"]}
+                style={{
+                  width: 240,
+                }}
+                onClick={() => handleOnClick(item["id"])}
+                cover={
+                  <img
+                    alt="example"
+                    src={item["image"]}
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      height: "30vh",
+                    }}
+                  />
+                }
+              >
+                <Meta title={item["name"]} />
+              </Card>
+            ))
+          ) : (
+            <>
+              {" "}
+              <Empty style={{ marginTop: "20px" }} />
+            </>
+          )}
+        </Space>
+      </>
     );
 }
 export default SearchAttractions

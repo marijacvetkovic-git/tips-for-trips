@@ -98,6 +98,7 @@ const PlanYourTrip = () => {
   Distance in km ${attraction["distaneInKm"]}`,
     id: attraction["id"],
     avgRate: attraction["avgRate"],
+    image:attraction["image"]
   }));
 
   const IconText = ({ icon, text }) => (
@@ -266,7 +267,13 @@ const PlanYourTrip = () => {
                 <img
                   width={272}
                   alt="logo"
-                  src="https://gw.alipayobjects.com/zos/rmsportal/mqaQswcyDLcXyDKnZfES.png"
+                  src={item.image}
+                  style={{
+                    display: "block",
+                    width: "20vw",
+                    height: "30vh",
+                    // Postavite širinu na 100%
+                  }}
                 />
               }
             >

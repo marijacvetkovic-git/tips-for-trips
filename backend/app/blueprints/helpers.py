@@ -30,9 +30,10 @@ def removeUser(username):
 
 @helpers.route("/returnMostRecommendedAttractions", methods=['GET'])
 def returnMostRecommendedAttractions():
-    query=f"""MATCH (a:Attraction)-[r:RECOMMENDED_FOR]->(u) 
-    WITH a,COUNT(r) as numberOfRecommendation
-    RETURN a.id as id ,a.name as name,numberOfRecommendation
+    query=f"""MATCH (a:Attraction)-[r:RECOMMENDED_FOR]->(u)
+    OPTIONAL MATCH (a)-[r1:HAS_IMAGE]->(i:Image) WHERE i.path CONTAINS "1" 
+    WITH a,COUNT(r) as numberOfRecommendation,i
+    RETURN a.id as id ,a.name as name,numberOfRecommendation, i.path as image
     ORDER BY numberOfRecommendation DESC
     """
     listOfAttractions=list(db.execute_and_fetch(query))
@@ -43,8 +44,9 @@ def returnAttraction(id):
     query=f"""MATCH (a:Attraction) WHERE a.id='{id}'
 OPTIONAL MATCH (a)-[r:HAS_ACTIVITY]->(activity:Activity) 
 OPTIONAL MATCH (a)-[r1:HAS_HASHTAG]->(h:Hashtag)
- WITH a,COLLECT(DISTINCT activity.name) AS activitiesForAttraction,COLLECT(DISTINCT r) as relationship , COLLECT(DISTINCT h.name) as hashtags
-    return a.id as id , a.name as name ,a.description as description, a.averageRate as avgRate,activitiesForAttraction,relationship, hashtags
+OPTIONAL MATCH (a)-[r2:HAS_IMAGE]->(i:Image)
+ WITH a,COLLECT(DISTINCT i.path) as images,COLLECT(DISTINCT activity.name) AS activitiesForAttraction, COLLECT(DISTINCT r) as relationship , COLLECT(DISTINCT h.name) as hashtags
+    return a.id as id , a.name as name ,a.description as description, a.averageRate as avgRate,images, activitiesForAttraction,relationship, hashtags
     """
     resultList=list(db.execute_and_fetch(query))
     listOfAttractionInformation=[]
@@ -52,7 +54,7 @@ OPTIONAL MATCH (a)-[r1:HAS_HASHTAG]->(h:Hashtag)
         # hasActivity=[i.properties for i in item["relationship"]]
         hasActivity = [{k: str(v) if k == "durationOfActivity" else v for k, v in i.properties.items()} for i in item["relationship"]]
 
-        listOfAttractionInformation.append({"name":item["name"],"description":item["description"],"avgRate":item["avgRate"],"activities":item["activitiesForAttraction"],
+        listOfAttractionInformation.append({"name":item["name"],"description":item["description"],"avgRate":item["avgRate"],"images":item["images"],"activities":item["activitiesForAttraction"],
                                             "relationship":hasActivity,"hashtags":item["hashtags"]})
     return jsonify(listOfAttractionInformation)
 #  NISAM JOS ISKORISTILA FJU..A VERV BI TREBALO
@@ -96,3 +98,6 @@ def getUser(userId):
     RETURN u.username as username, u.dateOfBirth as date, u.email as email, hashtags ,attractionNames , attractionIds"""
     resultList=list(db.execute_and_fetch(query))
     return jsonify(resultList)
+
+
+

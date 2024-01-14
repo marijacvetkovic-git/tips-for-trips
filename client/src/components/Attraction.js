@@ -5,10 +5,6 @@ import { Image, List } from "antd";
 import { Carousel } from "antd";
 import { Button, Modal, Space } from "antd";
 import { Col, Divider, Row } from "antd";
-const style = {
-  // height:"50vh",
-  // width:"50vw",
-};
 
 const Attraction = () => {
   const location = useLocation();
@@ -18,14 +14,7 @@ const Attraction = () => {
   const [attractionActivities, setAttractionActivities] = useState([]);
   const [attractionRelationship, setAttractionRelationship] = useState([]);
   const [attractionHashtags, setAttractionHashtags] = useState([]);
-
- const onChange = (current) => {
-   console.log(`Current slide: ${current}`);
- };
-
- const contentStyle = {
-   objectFit: "fill",
- };
+  const [attractionImages,setAttractionImages]=useState([])
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState("");
   const [modalTitle, setModalTitle] = useState("");
@@ -63,7 +52,8 @@ const Attraction = () => {
           setAttractionActivities(responce.data[0]["activities"]);
           setAttractionRelationship(responce.data[0]["relationship"]);
           setAttractionHashtags(responce.data[0]["hashtags"]);
-          console.log(responce.data[0]["hashtags"]);
+          setAttractionImages(responce.data[0]["images"])
+          console.log(responce.data[0]["images"]);
         }
       })
       .catch((error) => {
@@ -72,42 +62,35 @@ const Attraction = () => {
   }, []);
    const [currentSlide, setCurrentSlide] = useState(0);
 
-   const images = [
-     "./assets/6ed922df-8026-44c3-93ae-09ed6a9128a5__1.jpg",
-     "./assets/6ed922df-8026-44c3-93ae-09ed6a9128a5__2.jpg",
-     "./assets/6ed922df-8026-44c3-93ae-09ed6a9128a5__3.jpg",
-     "./assets/6ed922df-8026-44c3-93ae-09ed6a9128a5__4.jpg",
-     "./assets/6ed922df-8026-44c3-93ae-09ed6a9128a5__5.jpg",
-   ];
 
-   const nextSlide = () => {
-     setCurrentSlide((prevSlide) => (prevSlide + 1) % images.length);
-   };
+const nextSlide = () => {
+  setCurrentSlide((prevSlide) => (prevSlide + 1) % attractionImages.length);
+};
 
-   const prevSlide = () => {
-     setCurrentSlide(
-       (prevSlide) => (prevSlide - 1 + images.length) % images.length
-     );
-   };
+const prevSlide = () => {
+  setCurrentSlide(
+    (prevSlide) => (prevSlide - 1 + attractionImages.length) % attractionImages.length
+  );
+};
 
-    const carouselStyle = {
-      width: "60%", // Podesite željenu širinu karusela
-      margin: "auto", // Centrirajte karusel na stranici
-      overflow: "hidden",
-    };
+const carouselStyle = {
+  width: "60%", // Podesite željenu širinu karusela
+  margin: "auto", // Centrirajte karusel na stranici
+  overflow: "hidden",
+};
 
-    const slideContainerStyle = {
-      display: "flex",
-      width: `${images.length * 100}%`,
-      transform: `translateX(-${currentSlide * (100 / images.length)}%)`,
-      transition: "transform 0.5s",
-    };
+const slideContainerStyle = {
+  display: "flex",
+  width: `${attractionImages.length * 100}%`,
+  transform: `translateX(-${currentSlide * (100 / attractionImages.length)}%)`,
+  transition: "transform 0.5s",
+};
 
-    const imageStyle = {
-      width: `${100 / images.length}%`,
-      height: "auto",
-      flex: "0 0 auto",
-    };
+const imageStyle = {
+  width: `${100 / attractionImages.length}%`,
+  height: "95vh",
+  flex: "0 0 auto",
+};
   return (
     <>
       <div>
@@ -115,7 +98,7 @@ const Attraction = () => {
       </div>
       <div style={carouselStyle}>
         <div style={slideContainerStyle}>
-          {images.map((imageUrl, index) => (
+          {attractionImages.map((imageUrl, index) => (
             <img
               key={index}
               src={imageUrl}
@@ -131,7 +114,7 @@ const Attraction = () => {
             marginTop: "10px",
           }}
         >
-          {images.map((_, index) => (
+          {attractionImages.map((_, index) => (
             <div
               key={index}
               onClick={() => setCurrentSlide(index)}

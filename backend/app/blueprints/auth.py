@@ -32,6 +32,7 @@ def register():
     longitude=req_data.get("longitude"),
     latitude=req_data.get("latitude")
     )
+ 
     if form.validate_on_submit():
             user=User(id=str(uuid.uuid4()),username=form.username.data,password=bcrypt.generate_password_hash(form.password.data),
                      email=form.email.data,dateOfBirth=1,longitude=form.longitude.data,latitude=form.latitude.data)

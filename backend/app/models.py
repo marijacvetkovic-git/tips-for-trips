@@ -51,7 +51,12 @@ class City(Node):
     id:str= Field(index=True, unique=True, exists=True, db=db)
     name:str= Field(index=True, unique=True, exists=True, db=db)
     description:str = Field(exists=True,db=db)   
-   
+ 
+class Image(Node):
+    id:str= Field(index=True, unique=True, exists=True, db=db)
+    path:str= Field(index=True, unique=True, exists=True, db=db)
+ 
+  
 class Likes(Relationship,type="LIKES"):
     dateAndTime:datetime = Field(exists=True, db=db)
     
@@ -80,4 +85,7 @@ class RecommendedFor(Relationship,type="RECOMMENDED_FOR"):
     pass
 
 class HasAttraction(Relationship,type="HAS_ATTRACTION"):
+    pass
+
+class HasImage(Relationship,type="HAS_IMAGE"):
     pass

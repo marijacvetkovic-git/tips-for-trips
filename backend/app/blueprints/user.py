@@ -18,12 +18,13 @@ attractions_schema = AttractionSchema(many=True)
 @jwt_required()
 def recommend(userId):
     query=f""" MATCH (u:User)<-[r:RECOMMENDED_FOR]-(a:Attraction) WHERE u.id="{userId}"
-    RETURN a
+    OPTIONAL MATCH (a)-[r1:HAS_IMAGE]->(i:Image) WHERE i.path CONTAINS "1"
+    RETURN  a.id as id, a.name as name, i.path as image
     ORDER BY a.averageRate DESC
     """
-    result=list(db.execute_and_fetch(query))
-    recommendAttractions=[item["a"] for item in result]
-    results = attractions_schema.dump(recommendAttractions)
+    results=list(db.execute_and_fetch(query))
+    # recommendAttractions=[item["a"] for item in result]
+    # results = attractions_schema.dump(recommendAttractions)
     return jsonify(results)
   
   
@@ -46,6 +47,7 @@ def nearYouRecommendation(usersId):
     
     query=f""" 
 MATCH (a:Attraction)
+OPTIONAL MATCH (a)-[r:HAS_IMAGE]->(i:Image) where i.path CONTAINS "1"
 WITH a,
     6371 * 2 * atan2(
         sqrt(
@@ -64,8 +66,8 @@ WITH a,
             sin((a.longitude - {usersLongitude}) * 3.14 / 360) * 
             sin((a.longitude - {usersLongitude}) * 3.14 / 360)
         )
-    ) AS udaljenost
-RETURN a.id as id, a.name as name , udaljenost
+    ) AS udaljenost,i
+RETURN a.id as id, a.name as name , udaljenost , i.path as image
 ORDER BY udaljenost
 LIMIT 10;
  """
@@ -115,9 +117,10 @@ def planTrip():
     whereConditions=[]
     
     query+=f"""MATCH (c:City{{id:'{pickedCity}'}})-[r1:HAS_ATTRACTION]->(a:Attraction)
+    OPTIONAL MATCH (a)-[r3:HAS_IMAGE]->(i:Image) WHERE i.path CONTAINS "1"
     OPTIONAL MATCH (a)-[r2:HAS_ACTIVITY]->(activity:Activity)
     WHERE size({activities}) = 0 OR (size({activities}) > 0 AND activity.id IN {activities})
-    WITH a, COLLECT(activity) AS activitiesForAttraction,COLLECT(r2) AS rels
+    WITH i,a, COLLECT(activity) AS activitiesForAttraction,COLLECT(r2) AS rels
        """
 
     if familyFriendly:
@@ -129,13 +132,13 @@ def planTrip():
     if whereConditions:
         query+="WHERE "+" AND ".join(whereConditions)
         
-    query+= f""" WITH a, activitiesForAttraction,rels,
+    query+= f""" WITH i,a, activitiesForAttraction,rels,
      CASE 
        WHEN size({activities}) > 0 
        THEN REDUCE(s = 0, x IN activitiesForAttraction | s + CASE WHEN x.id IN {activities} THEN 1 ELSE 0 END)
        ELSE 0
      END AS commonActivities
-    WITH a, activitiesForAttraction, commonActivities,rels,
+    WITH i,a, activitiesForAttraction, commonActivities,rels,
     
      REDUCE(s = 0.0, r IN rels | s + COALESCE(toInteger(split(coalesce(toString(r.durationOfActivity), ""), ":")[0])*3600 + toInteger(split(coalesce(toString(r.durationOfActivity), ""), ":")[1])*60 + toInteger(split(coalesce(toString(r.durationOfActivity), ""), ":")[2]), 0.0))+(a.durationOfVisit.hour * 3600 + a.durationOfVisit.minute * 60 + a.durationOfVisit.second) AS totalDuration,
         6371 * 2 * atan2(
@@ -169,7 +172,7 @@ def planTrip():
         """
     
     query+=f"""RETURN a.id as id, a.name as name, a.averageRate as avgRate , toInteger(totalDuration/3600) as houres, toInteger((totalDuration % 3600) / 60) as minutes,toInteger(totalDuration % 60) as seconds,
-       commonActivities as matchedActivities,udaljenost/1000 as distaneInKm
+       commonActivities as matchedActivities,udaljenost/1000 as distaneInKm,i.path as image
 
         ORDER BY udaljenost,commonActivities DESC 
         """
@@ -200,13 +203,14 @@ def searchEngineAll(userId,searchText):
     OR toLower(a.name) STARTS WITH searchText
     OR toLower(a.name) CONTAINS searchText
     OR toLower(a.description) CONTAINS searchText
+    OPTIONAL MATCH (a)-[r1:HAS_IMAGE]->(i:Image) WHERE i.path CONTAINS "1"
     WITH a,CASE WHEN toLower(c.name) = searchText THEN 1 ELSE 0 END as cityExists,
     CASE WHEN toLower(a.name) STARTS WITH searchText THEN 1 ELSE 0 END as nameStartsWith,
-    CASE WHEN toLower(a.name) CONTAINS searchText THEN 1 ELSE 0 END as nameContains
+    CASE WHEN toLower(a.name) CONTAINS searchText THEN 1 ELSE 0 END as nameContains, i
     OPTIONAL MATCH (a)-[r:HAS_HASHTAG]-(h:Hashtag)
     WHERE h.name IN {useeWantsToSeehashtag}
-    WITH a, cityExists, nameStartsWith, nameContains,COUNT(h) AS matchingHashtags
-    RETURN a.name as name, a.id as id, cityExists, nameStartsWith,nameContains, COALESCE(matchingHashtags, 0) AS matchingHashtags
+    WITH a, cityExists, nameStartsWith, nameContains,COUNT(h) AS matchingHashtags,i
+    RETURN a.name as name, a.id as id, cityExists, nameStartsWith,nameContains, COALESCE(matchingHashtags, 0) AS matchingHashtags, i.path as image
     ORDER BY cityExists DESC, nameStartsWith DESC,nameContains DESC,matchingHashtags DESC """
     listOfResult=list(db.execute_and_fetch(query))
     print(listOfResult[0]["name"])
@@ -227,18 +231,19 @@ def searchEngineAttractionName(userId,searchText):
 MATCH (a:Attraction)
 WHERE toLower(a.name) CONTAINS searchText
    OR toLower(a.description) CONTAINS searchText
+OPTIONAL MATCH (a)-[r1:HAS_IMAGE]->(i:Image) WHERE i.path CONTAINS "1"
 WITH a,
     CASE WHEN toLower(a.name) STARTS WITH searchText THEN 1 ELSE 0 END as startsWithString,
     CASE WHEN toLower(a.name) CONTAINS searchText THEN 1 ELSE 0 END as containsString,
     CASE WHEN toLower(a.description) STARTS WITH searchText THEN 1 ELSE 0 END as descStartsWithString,
     CASE WHEN toLower(a.description) CONTAINS searchText THEN 1 ELSE 0 END as descContainsString,
-    searchText
-WITH a, startsWithString, containsString, descStartsWithString, descContainsString, searchText
+    searchText,i
+WITH a, startsWithString, containsString, descStartsWithString, descContainsString, searchText,i
 OPTIONAL MATCH (a)-[r:HAS_HASHTAG]-(h:Hashtag)
 WHERE h.name IN {userWantsToSeehashtag}
   AND (toLower(a.name) CONTAINS searchText OR toLower(a.description) CONTAINS searchText)
-WITH a, startsWithString, containsString, descStartsWithString, descContainsString, searchText, COUNT(h) AS matchingHashtags
-RETURN a.name as name ,a.id as id, startsWithString, containsString, descStartsWithString, descContainsString, matchingHashtags, a.averageRate
+WITH a, startsWithString, containsString, descStartsWithString, descContainsString, searchText, COUNT(h) AS matchingHashtags,i
+RETURN a.name as name ,a.id as id, startsWithString, containsString, descStartsWithString, descContainsString, matchingHashtags, a.averageRate,i.path as image
 ORDER BY startsWithString DESC, containsString DESC, descStartsWithString DESC, descContainsString DESC, a.averageRate DESC;
 
     """
@@ -258,10 +263,11 @@ def searchEngineHashTag(userId,searchText):
     query=f""" 
     WITH toLower("{searchText}") AS searchText
     MATCH (a:Attraction)-[:HAS_HASHTAG]->(h:Hashtag) 
-    WHERE toLower(h.name) STARTS WITH searchText 
-    WITH a, collect(h.name) as hashtags
-    with a, REDUCE(s = 0, i IN hashtags | s + CASE WHEN i IN {userWantsToSeehashtag} THEN 1 ELSE 0 END) AS rezultat
-    RETURN a.id as id, a.name as name ,rezultat,a.averageRate
+    WHERE toLower(h.name) STARTS WITH searchText
+    OPTIONAL MATCH (a)-[r1:HAS_IMAGE]->(i:Image) WHERE i.path CONTAINS "1" 
+    WITH a, collect(h.name) as hashtags,i
+    with a, REDUCE(s = 0, i IN hashtags | s + CASE WHEN i IN {userWantsToSeehashtag} THEN 1 ELSE 0 END) AS rezultat,i
+    RETURN a.id as id, a.name as name ,rezultat,a.averageRate, i.path as image
     ORDER BY rezultat DESC, a.averageRate DESC
  """
     listOfResult=list(db.execute_and_fetch(query))
@@ -282,9 +288,10 @@ def searchEngineActivity(userId,searchText):
     WITH toLower("{searchText}") AS searchText
     MATCH (a:Attraction)-[:HAS_ACTIVITY]->(h:Activity) 
     WHERE toLower(h.name) STARTS WITH searchText 
-    with a, collect(h.name) as activities
+    OPTIONAL MATCH (a)-[r1:HAS_IMAGE]->(i:Image) WHERE i.path CONTAINS "1"
+    with a, collect(h.name) as activities,i
 
-    RETURN a.name as name , a.id as id ,a.averageRate,activities
+    RETURN a.name as name , a.id as id ,a.averageRate,activities, i.path as image
     ORDER BY  a.averageRate DESC
  """
  
@@ -306,10 +313,11 @@ def searchEngineCity(userId,searchText):
     WITH toLower("{searchText}") AS searchText
     MATCH (a:Attraction)<-[:HAS_ATTRACTION]-(c:City) 
     WHERE toLower(c.name) = searchText 
+    OPTIONAL MATCH (a)-[r1:HAS_IMAGE]->(i:Image) WHERE i.path CONTAINS "1"
     OPTIONAL MATCH (a)-[r:HAS_HASHTAG]-(h:Hashtag)
     WHERE h.name IN {userWantsToSeehashtag}
-    WITH a,COUNT(h) AS matchingHashtags
-    RETURN a.name as name, a.id as id , COALESCE(matchingHashtags, 0) AS matchingHashtags
+    WITH a,COUNT(h) AS matchingHashtags,i
+    RETURN a.name as name, a.id as id , COALESCE(matchingHashtags, 0) AS matchingHashtags, i.path as image
     ORDER BY matchingHashtags DESC, a.averageRate DESC
  """
     listOfResult=list(db.execute_and_fetch(query))
@@ -325,11 +333,11 @@ def searchEngineNotLoggedIn(searchText):
     WHERE toLower(c.name) = searchText
     OR toLower(a.name) STARTS WITH searchText
     OR toLower(a.name) CONTAINS searchText
-    OR toLower(a.description) CONTAINS searchText
+    OPTIONAL MATCH (a)-[r1:HAS_IMAGE]->(i:Image) WHERE i.path CONTAINS "1"
     WITH a,CASE WHEN toLower(c.name) = searchText THEN 1 ELSE 0 END as cityExists,
     CASE WHEN toLower(a.name) STARTS WITH searchText THEN 1 ELSE 0 END as nameStartsWith,
-    CASE WHEN toLower(a.name) CONTAINS searchText THEN 1 ELSE 0 END as nameContains
-    RETURN a.id as id ,a.name as name, cityExists, nameStartsWith,nameContains
+    CASE WHEN toLower(a.name) CONTAINS searchText THEN 1 ELSE 0 END as nameContains,i
+    RETURN a.id as id ,a.name as name, cityExists, nameStartsWith,nameContains, i.path as image
     ORDER BY cityExists DESC ,nameStartsWith DESC ,nameContains DESC
     """
     listOfResult=list(db.execute_and_fetch(query))

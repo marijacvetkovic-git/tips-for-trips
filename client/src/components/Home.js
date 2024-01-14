@@ -88,6 +88,11 @@ const Home = () => {
     console.log(value);
     navigate("/search", { state: value });
   };
+  const spaceStyle = {
+    display: "flex",
+    flexWrap: "wrap",
+    justifyContent: "space-between", // Možete eksperimentisati sa ovim vrednostima
+  };
 
   return (
     <>
@@ -98,7 +103,7 @@ const Home = () => {
         enterButton
       />
       <h1>{title}</h1>
-      <Space size={[8, 16]} wrap>
+      <Space size={[8, 16]} style={spaceStyle} wrap>
         {listOfAttractions &&
           listOfAttractions.map((item) => (
             <Card
@@ -107,12 +112,18 @@ const Home = () => {
               id={item["id"]}
               style={{
                 width: 240,
+                
               }}
               onClick={() => handleOnClick(item["id"])}
               cover={
                 <img
                   alt="example"
-                  src="https://os.alipayobjects.com/rmsportal/QBnOOoLaAfKPirc.png"
+                  src={item["image"]}
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    height:"30vh"
+                  }}
                 />
               }
             >
