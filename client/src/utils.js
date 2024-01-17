@@ -41,3 +41,12 @@ export function getExpiration() {
   console.log(exp)
   return exp;
 }
+export function getUserRole() {
+  var user = localStorage.getItem("token");
+  if (user == null) {
+    return;
+  }
+  const role = parseJwt(user)?.role;
+  console.log(role);
+  return role;
+}

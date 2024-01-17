@@ -9,10 +9,11 @@ import Attraction from './components/Attraction'
 import SearchAttractions from './components/SearchAttractions';
 import PlanYourTrip from './components/PlanYourTrip';
 import Profile from './components/Profile';
+import Admin from './components/Admin';
 import {useState} from 'react'
 import React from 'react';
 import { Layout, Menu, theme } from 'antd';
-import { getExpiration, getUsername } from './utils';
+import { getExpiration, getUserRole, getUsername } from './utils';
 import { UserOutlined } from "@ant-design/icons";
 import { Avatar } from "antd";
 
@@ -100,6 +101,12 @@ function App() {
                 <MenuItem key={"3"} style={{ float: "left" }}>
                   <Link onClick={logOut}>LogOut</Link>
                 </MenuItem>
+
+                {getUserRole() == true && (
+                  <MenuItem key={"4"} style={{ float: "left" }}>
+                    <Link to={"/admin"}>Admin</Link>
+                  </MenuItem>
+                )}
               </>
             )}
           </Menu>
@@ -127,6 +134,7 @@ function App() {
               <Route path="/search" element={<SearchAttractions />} />
               <Route path="/planYourTrip" element={<PlanYourTrip />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/admin" element={<Admin />} />
             </Routes>
           </div>
         </Content>

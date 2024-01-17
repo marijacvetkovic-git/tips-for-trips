@@ -24,6 +24,7 @@ class User(Node,UserMixin):
     dateOfBirth:date = Field(exists=True, db=db)
     latitude: float = Field(exists=True, db=db)
     longitude: float = Field(exists=True, db=db)
+    role:bool = Field(exists=True, db=db)
         
 class Attraction(Node):
     id:str = Field(index=True, unique=True, exists=True, db=db)

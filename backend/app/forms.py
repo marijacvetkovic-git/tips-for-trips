@@ -68,6 +68,18 @@ class AddAttractionForm(FlaskForm):
         listOfAttractions=list(attractions)
         if listOfAttractions:
             raise ValidationError('Some attraction already exists at that location') 
+        attractions=(
+          match()
+          .node(labels="Attraction",variable="a")
+          .where(item="a.name",operator=Operator.EQUAL,literal=formica.name.data)
+          .return_(("a","attraction"))
+          .execute()
+          )
+        listOfAttractions=list(attractions)
+
+        if listOfAttractions:
+            raise ValidationError('Some attraction already exists with that name') 
+        
             
     name=StringField('Name', validators=[DataRequired()])
     description= StringField('Description', validators=[DataRequired()])
@@ -372,5 +384,176 @@ class AddHasAttractionForm(FlaskForm):
         if listOfHasAttraction:
             raise ValidationError('City with specific id already has attraction with specific id !')
         form.tupleForResult=(idOfCity,idOfAttraction)
-            
+ 
+class DeleteHasHashtagForm(FlaskForm):
+    idOfAttraction=StringField("Id of attraction",validators=[DataRequired()])
+    idOfHashtag=StringField("Id of hashtag",validators=[DataRequired()])
+
+    
+    def validate_idOfAttraction(form,nzm):
+        attractions=(
+            match()
+            .node(labels="Attraction",variable="attraction")
+            .where(item="attraction.id",operator=Operator.EQUAL,literal=form.idOfAttraction.data)
+            .return_("attraction")
+            .execute()    
+        )
+        listOfAttractions=list(attractions)
+        if not listOfAttractions:
+            raise ValidationError('Attraction with specific id does not exist!')
+        attraction:Attraction =listOfAttractions[0]["attraction"]
+        idOfAttraction=attraction._id
+       
+        hashtags=(
+            match()
+            .node(labels="Hashtag",variable="hashtag")
+            .where(item="hashtag.id",operator=Operator.EQUAL,literal=form.idOfHashtag.data)
+            .return_("hashtag")
+            .execute()    
+        )
+        listOfhashtags=list(hashtags)
+        if not listOfhashtags:
+            raise ValidationError('Hashtag with specific id does not exist!')
+        hashtag:Hashtag =listOfhashtags[0]["hashtag"]
+        idOfHashtag=hashtag._id
+        
+        
+        hasHashtag=(
+            match()
+            .node(labels="Attraction",variable="attraction",id=form.idOfAttraction.data)
+            .to(relationship_type="HAS_HASHTAG")
+            .node(labels="Hashtag",variable="hashtag",id=form.idOfHashtag.data)
+            .return_(results=["attraction","hashtag"])
+            .execute()
+        )
+        listOfhasHashtag=list(hasHashtag)
+        if not listOfhasHashtag:
+            raise ValidationError('Attraction with specific id does not have hastag with specific id !')
+        form.tupleForResult=(idOfAttraction,idOfHashtag)
           
+class DeleteHasActivityForm(FlaskForm):
+    idOfAttraction=StringField("Id of attraction",validators=[DataRequired()])
+    idOfActivity=StringField("Id of activity",validators=[DataRequired()])
+
+    def validate_idOfAttraction(form,nzm):
+        attractions=(
+            match()
+            .node(labels="Attraction",variable="attraction")
+            .where(item="attraction.id",operator=Operator.EQUAL,literal=form.idOfAttraction.data)
+            .return_("attraction")
+            .execute()    
+        )
+        listOfAttractions=list(attractions)
+        if not listOfAttractions:
+            raise ValidationError('Attraction with specific id does not exist!')
+        attraction:Attraction =listOfAttractions[0]["attraction"]
+       
+        activities=(
+            match()
+            .node(labels="Activity",variable="activity")
+            .where(item="activity.id",operator=Operator.EQUAL,literal=form.idOfActivity.data)
+            .return_("activity")
+            .execute()    
+        )
+        listOfactivities=list(activities)
+        if not listOfactivities:
+            raise ValidationError('Activity with specific id does not exist!')
+        activity:Activity =listOfactivities[0]["activity"]
+        
+        
+        hasActivity=(
+            match()
+            .node(labels="Attraction",variable="attraction",id=form.idOfAttraction.data)
+            .to(relationship_type="HAS_ACTIVITY")
+            .node(labels="Activity",variable="activity",id=form.idOfActivity.data)
+            .return_(results=["attraction","activity"])
+            .execute()
+        )
+        listOfhasActivity=list(hasActivity)
+        if not listOfhasActivity:
+            raise ValidationError('Attraction with specific id already does not have activity with specific id !')
+
+class DeleteVisitedForm(FlaskForm):
+    idOfAttraction=StringField("Id of attraction",validators=[DataRequired()])
+    idOfUser=StringField("Id of user",validators=[DataRequired()])
+    
+    def validate_idOfAttraction(form,nzm):
+        attractions=(
+            match()
+            .node(labels="Attraction",variable="attraction")
+            .where(item="attraction.id",operator=Operator.EQUAL,literal=form.idOfAttraction.data)
+            .return_("attraction")
+            .execute()    
+        )
+        listOfAttractions=list(attractions)
+        if not listOfAttractions:
+            raise ValidationError('Attraction with specific id does not exist!')
+        attraction:Attraction =listOfAttractions[0]["attraction"]
+        idOfAttraction=attraction._id
+       
+        users=(
+            match()
+            .node(labels="User",variable="user")
+            .where(item="user.id",operator=Operator.EQUAL,literal=form.idOfUser.data)
+            .return_("user")
+            .execute()    
+        )
+        listOfusers=list(users)
+        if not listOfusers:
+            raise ValidationError('User with specific id does not exist!')
+        user:Hashtag =listOfusers[0]["user"]
+        idOfUser=user._id
+        
+        
+        visited=(
+            match()
+            .node(labels="User",variable="user",id=form.idOfUser.data)
+            .to(relationship_type="VISITED")
+            .node(labels="Attraction",variable="attraction",id=form.idOfAttraction.data)
+            .return_(results=["user","attraction"])
+            .execute()
+        )
+        listOfvisits=list(visited)
+        if not listOfvisits:
+            raise ValidationError('User with specific id already did not visit attraction with specific id !')
+        
+class DeleteHasAttractionForm(FlaskForm):
+    idOfCity=StringField("Id of city",validators=[DataRequired()])
+    idOfAttraction=StringField("Id of attraction",validators=[DataRequired()])
+    submit = SubmitField('Delete')
+    
+    def validate_idOfCity(form,nzm):
+        cities=(
+            match()
+            .node(labels="City",variable="city")
+            .where(item="city.id",operator=Operator.EQUAL,literal=form.idOfCity.data)
+            .return_("city")
+            .execute()    
+        )
+        listOfCities=list(cities)
+        if not listOfCities:
+            raise ValidationError('City with specific id does not exist!')
+       
+        attractions=(
+            match()
+            .node(labels="Attraction",variable="attraction")
+            .where(item="attraction.id",operator=Operator.EQUAL,literal=form.idOfAttraction.data)
+            .return_("attraction")
+            .execute()    
+        )
+        listOfattractions=list(attractions)
+        if not listOfattractions:
+            raise ValidationError('Attraction with specific id does not exist!')
+        
+        
+        hasAttraction=(
+            match()
+            .node(labels="City",variable="city",id=form.idOfCity.data)
+            .to(relationship_type="HAS_ATTRACTION")
+            .node(labels="Attraction",variable="attraction",id=form.idOfAttraction.data)
+            .return_(results=["city","attraction"])
+            .execute()
+        )
+        listOfHasAttraction=list(hasAttraction)
+        if not listOfHasAttraction:
+            raise ValidationError('City with specific id does not have attraction with specific id !')

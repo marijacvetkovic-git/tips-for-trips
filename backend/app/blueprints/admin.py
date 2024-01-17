@@ -1,4 +1,5 @@
 import string
+from datetime import time
 import uuid
 from flask import Blueprint, redirect,render_template,jsonify,flash, request, url_for
 from flask_jwt_extended import jwt_required
@@ -30,68 +31,103 @@ def addImage(attractionId):
     return jsonify(),200
 
 
-# @admin.route("/getImages/<string:attractionId>",methods=['GET'])  
-# def getImages(attractionId):
-#     query=f""" MATCH (a:Attraction) WHERE a.id='{attractionId}'
-#     OPTIONAL MATCH (a)-[r:HAS_IMAGE]->(i:Image)
-#     return i.path as path
-#     """
-#     listOfImgPaths=[item["path"] for item in list(db.execute_and_fetch(query))]
-    
-#     if None in listOfImgPaths:
-#         return jsonify({"Error":"No photos"}),206
-    
-#     return jsonify(listOfImgPaths)
-        
-
-
-    
-    
-@admin.route("/addAttraction",methods=['GET','POST'])
+@admin.route("/deleteAttraction/<string:attractionId>",methods=['DELETE'])  
 @jwt_required()
 
-def addAttraction():
-    form= AddAttractionForm()
+def deleteAttraction(attractionId):
+    query=f""" MATCH (a:Attraction) WHERE a.id='{attractionId}'
+    DETACH DELETE a
+    """
+    db.execute(query)    
+    return jsonify({}),200
+    
+        
+  
+@admin.route("/createAttraction",methods=['POST'])
+@jwt_required()
+
+def createAttraction():
+    req_data = request.get_json() 
+
+    form= AddAttractionForm(
+    name=req_data.get("name"),
+    description=req_data.get("description"),
+    duration_of_visit=req_data.get("duration"),
+    family_friendly=req_data.get("familyFriendly"),
+    latitude=req_data.get("latitude"),
+    longitude=req_data.get("longitude"),
+    parking=req_data.get("parking")
+    )
     if form.validate_on_submit():
-        attraction=Attraction(id=str(uuid.uuid4()),name=form.name.data,description=form.description.data,longitude=form.longitude.data,latitude=form.latitude.data,familyFriendly=form.family_friendly.data,parking=form.parking.data,durationOfVisit=form.duration_of_visit.data)
+        id=str(uuid.uuid4())
+        attraction=Attraction(id=id,name=form.name.data,description=form.description.data,longitude=form.longitude.data,latitude=form.latitude.data,familyFriendly=form.family_friendly.data,parking=form.parking.data,durationOfVisit=form.duration_of_visit.data,averageRate=0)
         attraction.save(db)
 
-        flash(f'Your attraction is added!','success')
-        return redirect(url_for('home'))
+        
+        return jsonify({"id":id}),200
     
+    else:
+        errors = {"errors": form.errors}
+        return jsonify(errors), 206
+   
     
-    return render_template('addAttraction.html', title='Add attraction', form=form)
-
-@admin.route("/createHashtag",methods=['GET','POST'])
+@admin.route("/deleteHashtag/<string:hashtagId>",methods=['DELETE'])  
 @jwt_required()
 
-def createHashtag():
-    form = AddHashtagForm()
+def deleteHashtag(hashtagId):
+    query=f""" MATCH (a:Hashtag) WHERE a.id='{hashtagId}'
+    DETACH DELETE a
+    """
+    db.execute(query)    
+    return jsonify({"Message":"Hashtag deleted"}),200
+   
+
+@admin.route("/createHashtag/<string:hashName>",methods=['POST'])
+@jwt_required()
+
+def createHashtag(hashName):
+    
+    form = AddHashtagForm(
+        name=hashName
+    )
     if form.validate_on_submit():
         hashtag=Hashtag(id=str(uuid.uuid4()),name=form.name.data)
         hashtag.save(db)
 
-        flash(f'Your type of attraction is added!','success')
-        return redirect(url_for('home'))
+        return jsonify({"Message":"Hashtag is created"}),200
+    else:
+        errors = {"errors": form.errors}
+        return jsonify(errors), 206
     
     
-    return render_template('addHashtag.html', title='Add hashtag', form=form)
-    
-@admin.route("/createActivity",methods=['GET','POST'])
+@admin.route("/deleteActivity/<string:activityId>",methods=['DELETE'])  
 @jwt_required()
 
-def createActivity():
+def deleteActivity(activityId):
+    query=f""" MATCH (a:Activity) WHERE a.id='{activityId}'
+    DETACH DELETE a
+    """
+    db.execute(query)    
+    return jsonify({"Message":"Activity deleted"}),200
+     
+        
+@admin.route("/createActivity/<string:activityName>",methods=['POST'])
+@jwt_required()
+
+def createActivity(activityName):
     
-    form = AddActivityForm()
+    form = AddActivityForm(
+        name=activityName
+    )
     if form.validate_on_submit():
         activity=Activity(id=str(uuid.uuid4()),name=form.name.data)
         activity.save(db)
 
-        flash(f'Your activity is added!','success')
-        return redirect(url_for('home'))
-    
-    
-    return render_template('addActivity.html', title='Add activity', form=form)
+        return jsonify({"Message":"Activity is created"}),200
+    else:
+        errors = {"errors": form.errors}
+        return jsonify(errors), 206
+
 
 @admin.route("/createCity",methods=['POST'])
 @jwt_required()
@@ -99,8 +135,8 @@ def createActivity():
 def createCity():
     req_data = request.get_json()    
     form = AddCityForm(
-    name=req_data.get("name"),
-    description=req_data.get("description")
+    name=req_data.get("cityName"),
+    description=req_data.get("cityDescription")
         
     )
     if form.validate_on_submit():
@@ -111,40 +147,110 @@ def createCity():
     else:
         errors = {"errors": form.errors}
         return jsonify(errors), 206
-
-@admin.route("/createRelationship_HAS_HASHTAG",methods=['GET','POST'])
+    
+    
+@admin.route("/deleteCity/<string:cityId>",methods=['DELETE'])
 @jwt_required()
 
-def createRelationship_HAS_HASHTAG():
-    form = AddHasHashForm()
+def deleteCity(cityId):
+    query=f""" MATCH (a:City) WHERE a.id='{cityId}'
+    DETACH DELETE a
+    """
+    db.execute(query)
+    return jsonify({"Message":"City deleted"}),200
+    
+
+@admin.route("/createRelationship_HAS_HASHTAG/<string:idOfAttraction>/<string:idOfHashtag>",methods=['POST'])
+@jwt_required()
+def createRelationship_HAS_HASHTAG(idOfAttraction,idOfHashtag,):
+    form = AddHasHashForm(
+        idOfAttraction=idOfAttraction,
+        idOfHashtag=idOfHashtag
+        
+    )
     m=form.validate_on_submit()
     if m:
         
         HasHashtag(_start_node_id=form.tupleForResult[0],_end_node_id=form.tupleForResult[1]).save(db)
 
-        flash(f'Your relationship is added!','success')
-        return redirect(url_for('createRelationship_HAS_HASHTAG'))
-    
-    
-    return render_template('addHashashtag.html', title='Add has hastag', form=form)
+        return jsonify({"Message":"HAS_HASHTAG added"}),200
+    else:
+        errors = {"errors": form.errors}
+        return jsonify(errors), 206
 
-@admin.route("/createRelationship_HAS_ACTIVITY",methods=['GET','POST'])
+@admin.route("/deleteRelationship_HAS_HASHTAG/<string:idOfAttraction>/<string:idOfHashtag>",methods=['DELETE'])
+@jwt_required()
+def deleteRelationship_HAS_HASHTAG(idOfAttraction,idOfHashtag):
+    form = DeleteHasHashtagForm(
+        idOfAttraction=idOfAttraction,
+        idOfHashtag=idOfHashtag
+        
+    )
+    m=form.validate_on_submit()
+    if m:
+        query=f""" MATCH (a:Attraction{{id:"{idOfAttraction}"}})-[r:HAS_HASHTAG]->(h:Hashtag{{id:"{idOfHashtag}"}}) DELETE r
+        """
+        db.execute(query)
+
+        return jsonify({"Message":"HAS_HASHTAG deleted"}),200
+    else:
+        errors = {"errors": form.errors}
+        return jsonify(errors), 206
+
+
+@admin.route("/createRelationship_HAS_ACTIVITY",methods=['POST'])
 @jwt_required()
 def createRelationship_HAS_ACTIVITY():
-    form = AddHasActivityForm()
+    req_data=request.get_json()
+    form = AddHasActivityForm(
+    idOfAttraction=req_data.get("idOfAttractionCHasActivity"),
+    idOfActivity=req_data.get("idOfActivityCHasActivity"),
+    duration_of_activity=req_data.get("durationOfActivity"),
+    experience=req_data.get("experience"),
+    minAge=req_data.get("minAge"),
+    maxAge=req_data.get("maxAge")
+    )
     if form.validate_on_submit():
         HasActivity(_start_node_id=form.tupleForResult[0],_end_node_id=form.tupleForResult[1],durationOfActivity=form.duration_of_activity.data,experience=form.experience.data,minAge=form.minAge.data,maxAge=form.maxAge.data).save(db)
 
-        flash(f'Your relationship is added!','success')
-        return redirect(url_for('home'))
-    
-    
-    return render_template('addHasActivity.html', title='Add has hastag', form=form)  
+        return jsonify({"Message":"HAS_ACTIVITY added"}),200
+    else:
+        errors = {"errors": form.errors}
+        return jsonify(errors), 206  
 
-@admin.route("/createRelationship_VISITED",methods=['GET','POST'])
+
+@admin.route("/deleteRelationship_HAS_ACTIVITY/<string:idOfAttraction>/<string:idOfActivity>",methods=['DELETE'])
+@jwt_required()
+def deleteRelationship_HAS_ACTIVITY(idOfAttraction,idOfActivity):
+    form = DeleteHasActivityForm(
+        idOfAttraction=idOfAttraction,
+        idOfActivity=idOfActivity
+        
+    )
+    m=form.validate_on_submit()
+    if m:
+        query=f""" MATCH (a:Attraction{{id:"{idOfAttraction}"}})-[r:HAS_ACTIVITY]->(h:Activity{{id:"{idOfActivity}"}})  DELETE r"""
+
+        db.execute(query)
+
+        return jsonify({"Message":"HAS_ACTIVITY deleted"}),200
+    else:
+        errors = {"errors": form.errors}
+        return jsonify(errors), 206
+    
+    
+
+@admin.route("/createRelationship_VISITED",methods=['POST'])
 @jwt_required()
 def createRelationship_VISITED():
-    form = AddVisitedForm()
+    req_data=request.get_json()
+
+    form = AddVisitedForm(
+        idOfAttraction=req_data.get("idOfAttraction"),
+        idOfUser=req_data.get("idOfUser"),
+        rate=req_data.get("rate")
+        
+    )
     if form.validate_on_submit():
         Visited(_start_node_id=form.tupleForResult[0],_end_node_id=form.tupleForResult[1],rate=form.rate.data,dateAndTime=datetime.datetime.now()).save(db)
         query=f""" MATCH (a:Attraction)<-[r:VISITED]-() WHERE a.id='{form.idOfAttraction.data}'
@@ -152,25 +258,32 @@ def createRelationship_VISITED():
                    SET a.averageRate = prosecnaOcena;
                    """
         db.execute(query)
-        flash(f'Your relationship is added!','success')
-        return redirect(url_for('home'))
-    
-    
-    return render_template('addVisited.html', title='Add has hastag', form=form)  
+        return jsonify({"Message":"VISITED added"}),200
+    else:
+        errors = {"errors": form.errors}
+        return jsonify(errors), 206  
 
-
-@admin.route("/createRelationship_WANTS_TO_SEE",methods=['GET','POST'])
+@admin.route("/deleteRelationship_VISITED/<string:idOfAttraction>/<string:idOfUser>",methods=['POST'])
 @jwt_required()
-def createRelationship_WANTS_TO_SEE():
-    form = AddWantsToSeeForm()
-    if form.validate_on_submit():
-        WantsToSee(_start_node_id=form.tupleForResult[0],_end_node_id=form.tupleForResult[1]).save(db)
+def deleteRelationship_VISITED(idOfAttraction,idOfUser):
 
-        flash(f'Your relationship is added!','success')
-        return redirect(url_for('home'))
-    
-    
-    return render_template('addWantsToSee.html', title='Add has hastag', form=form)
+    form = DeleteVisitedForm(
+        idOfAttraction=idOfAttraction,
+        idOfUser=idOfUser
+    )
+    if form.validate_on_submit():
+        query=f""" MATCH (a:Attraction{{id:'{form.idOfAttraction.data}'}})<-[r:VISITED]-(u:User{{id:'{form.idOfUser.data}'}}) 
+        DELETE r"""
+        db.execute(query)
+        query=f""" MATCH (a:Attraction)<-[r:VISITED]-() WHERE a.id='{form.idOfAttraction.data}'
+                   WITH a, AVG(r.rate) AS prosecnaOcena
+                   SET a.averageRate = prosecnaOcena;
+                   """          
+        db.execute(query)
+        return jsonify({"Message":"VISITED deleted"}),200
+    else:
+        errors = {"errors": form.errors}
+        return jsonify(errors), 206  
 
 
 @admin.route("/createRelationship_HAS_ATTRACTION",methods=['POST'])
@@ -178,14 +291,32 @@ def createRelationship_WANTS_TO_SEE():
 def createRelationship_HAS_ATTRACTION():
     req_data = request.get_json() 
     form = AddHasAttractionForm(
-    idOfCity=req_data.get("idOfCity"),
-    idOfAttraction=req_data.get("idOfAttraction")
+    idOfCity=req_data.get("idOfCityCHasAttraction"),
+    idOfAttraction=req_data.get("idOfAttractionCHasAttraction")
     )
     if form.validate_on_submit():
         HasAttraction(_start_node_id=form.tupleForResult[0],_end_node_id=form.tupleForResult[1]).save(db)
 
         flash(f'Your relationship is added!','success')
         return jsonify({"Message":"Relationship has_attraction is created"}),200
+    else:
+        errors = {"errors": form.errors}
+        return jsonify(errors), 206
+    
+    
+@admin.route("/deleteRelationship_HAS_ATTRACTION/<string:idOfCity>/<string:idOfAttraction>",methods=['DELETE'])
+@jwt_required()
+def deleteRelationship_HAS_ATTRACTION(idOfCity,idOfAttraction):
+    form = DeleteHasAttractionForm(
+    idOfCity=idOfCity,
+    idOfAttraction=idOfAttraction
+    )
+    if form.validate_on_submit():
+        query=f""" MATCH (c:City{{id:'{idOfCity}'}})-[r:HAS_ATTRACTION]->(a:Attraction{{id:'{idOfAttraction}'}})  DELETE r """
+        
+        db.execute(query)
+
+        return jsonify({"Message":"Relationship has_attraction is delete"}),200
     else:
         errors = {"errors": form.errors}
         return jsonify(errors), 206

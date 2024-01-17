@@ -19,7 +19,7 @@ from flask_jwt_extended import (
 jwtM=JWTManager(app)
 auth= Blueprint("auth",__name__,static_folder="static",template_folder="templates")
 
-@auth.route("/register", methods=['GET','POST'])
+@auth.route("/register", methods=['POST'])
 # kada stavim da je post metoda forma nece da se kreira
 def register():
     req_data = request.get_json() 
@@ -32,10 +32,14 @@ def register():
     longitude=req_data.get("longitude"),
     latitude=req_data.get("latitude")
     )
- 
+
+    role=0
+    if(form.username=="admin"):
+        role=1
+    
     if form.validate_on_submit():
             user=User(id=str(uuid.uuid4()),username=form.username.data,password=bcrypt.generate_password_hash(form.password.data),
-                     email=form.email.data,dateOfBirth=1,longitude=form.longitude.data,latitude=form.latitude.data)
+                     email=form.email.data,dateOfBirth=1,longitude=form.longitude.data,latitude=form.latitude.data,role=role)
             
             user.save(db)
             return jsonify({"username":user.username,"id":user.id}),200
@@ -72,7 +76,7 @@ def login(username,password,latitude,longitude):
             else:
                 expires_delta = datetime.timedelta(minutes=60) 
                 # access_token = create_access_token(identity=user.username,expires_delta=expires_delta)
-                access_token = create_access_token(identity=user.id, expires_delta=expires_delta, fresh=True, additional_claims={'username': user.username,'id':user.id})
+                access_token = create_access_token(identity=user.id, expires_delta=expires_delta, fresh=True, additional_claims={'username': user.username,'id':user.id,'role':user.role})
                 return jsonify(
                 {"token": access_token}
             ),200
@@ -96,10 +100,6 @@ def createRelationship_WANTS_TO_SEE():
         errors = {"errors": form.errors}
         return jsonify(errors), 206
     
-         
-    
-    
-
 @auth.route('/newUsercoldStartRecommendation/<string:userId>', methods=['POST']) 
 def newUsercoldStartRecommendation(userId):
     #TODO: Poziva se prilikom registracije korisnika
