@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import dayjs from "dayjs";
 import axios from "axios";
 
-import {Select, TimePicker, Button, Checkbox, Form, Input, Space } from "antd";
+import { Select, TimePicker, Button, Checkbox, Form, Input, Space, message, Upload } from "antd";
+import { UploadOutlined } from "@ant-design/icons";
 import FormItem from "antd/es/form/FormItem";
 
 const Admin = () => {
@@ -15,42 +16,118 @@ const Admin = () => {
   const [parking, setParking] = useState(false);
   const [listOfCities, setListOfCities] = useState([]);
   const [pickedCity, setPickedCity] = useState("");
+
   const [idOfAttractionDelete, setIdOfAttractionDelete] = useState("");
+  const [idOfAttractionDeleteError, setIdOfAttractionDeleteError] = useState("");
+
+  const [nameError, setNameError] = useState("");
+  const [latitudeError, setLatitudeError] = useState("");
 
   const [pickedAction, setPickedAction] = useState("");
   const [hashtagName, setHashtagName] = useState("");
+
+  const [hashtagNameError, setHashtagNameError] = useState("");
+
   const [hashtagId, setHashtagId] = useState("");
+  const [hashtagIdError, setHashtagIdError] = useState("");
+
 
   const [activityName, setActivityName] = useState("");
+  const [activityNameError, setActivityNameError] = useState("");
+
   const [activityId, setActivityId] = useState("");
+  const [activityIdError, setActivityIdError] = useState("");
 
   const [cityName, setCityName] = useState("");
+  const [cityNameError, setCityNameError] = useState("");
+
   const [cityId, setCityId] = useState("");
+  const [cityIdError, setCityIdError] = useState("");
+
   const [cityDescription, setCityDescription] = useState("");
 
-  const [idOfAttractionCHasHashtag, setIdOfAttractionCHasHashtag] =useState("");
+  const [idOfAttractionCHasHashtag, setIdOfAttractionCHasHashtag] =
+    useState("");
+    const [idOfAttractionCHasHashtagError, setIdOfAttractionCHasHashtagError] =
+      useState("");
+      
   const [idOfHashtafCHasHashtag, setIdOfHashtafCHasHashtag] = useState("");
+    const [idOfHashtafCHasHashtagError, setIdOfHashtafCHasHashtagError] = useState("");
 
-  const [idOfAttractionDHasHashtag, setIdOfAttractionDHasHashtag] =useState("");
+
+  const [idOfAttractionDHasHashtag, setIdOfAttractionDHasHashtag] =
+    useState("");
   const [idOfHashtafDHasHashtag, setIdOfHashtafDHasHashtag] = useState("");
+  
+
+    const [idOfAttractionDHasHashtagError, setIdOfAttractionDHasHashtagError] =
+      useState("");
+    const [idOfHashtafDHasHashtagError, setIdOfHashtafDHasHashtagError] = useState("");
+
 
   const [idOfAttractionCHasActivity, setIdOfAttractionCHasActivity] =
     useState("");
   const [idOfActivityCHasActivity, setIdOfActivityCHasActivity] = useState("");
+    const [idOfAttractionCHasActivityError, setIdOfAttractionCHasActivityError] =
+      useState("");
+    const [idOfActivityCHasActivityError, setIdOfActivityCHasActivityError] =
+      useState("");
   const [durationOfActivity, setDurationOfActivity] = useState("");
 
-  const [idOfAttractionDHasActivity, setIdOfAttractionDHasActivity] =useState("");
-  const [idOfHashtafDHasActivity, setIdOfHashtafDHasActivity] = useState("");
+  const [idOfAttractionDHasActivity, setIdOfAttractionDHasActivity] =
+    useState("");
+  const [idOfActivityDHasActivity, setIdOfActivityDHasActivity] = useState("");
 
-  const [idOfAttractionCHasAttraction, setIdOfAttractionCHasAttraction] = useState("");
+    const [idOfAttractionDHasActivityError, setIdOfAttractionDHasActivityError] =
+    useState("");
+  const [idOfActivityDHasActivityError, setIdOfActivityDHasActivityError] = useState("");
+
+  const [idOfAttractionCHasAttraction, setIdOfAttractionCHasAttraction] =
+    useState("");
   const [idOfCityCHasAttraction, setIdOfCityCHasAttraction] = useState("");
-  const [idOfAttractionDHasAttraction, setIdOfAttractionDHasAttraction] = useState("");
+ const [idOfAttractionCHasAttractionError, setIdOfAttractionCHasAttractionError] =
+   useState("");
+ const [idOfCityCHasAttractionError, setIdOfCityCHasAttractionError] = useState("");
+
+
+  const [idOfAttractionDHasAttraction, setIdOfAttractionDHasAttraction] =
+    useState("");
   const [idOfCityDHasAttraction, setIdOfCityDHasAttraction] = useState("");
+
+    const [idOfAttractionDHasAttractionError, setIdOfAttractionDHasAttractionError] =
+      useState("");
+    const [idOfCityDHasAttractionError, setIdOfCityDHasAttractionError] = useState("");
 
   const [experience, setExperience] = useState(false);
   const [minAge, setMinAge] = useState(0);
   const [maxAge, setMaxAge] = useState(0);
 
+
+
+  const cleanErrors = () => {
+    setIdOfAttractionDeleteError("")
+    setLatitudeError("")
+    setHashtagNameError("")
+    setHashtagIdError("")
+    setActivityNameError("")
+    setActivityIdError("")
+    setCityNameError("")
+    setCityIdError("")
+    setIdOfAttractionCHasHashtagError("")
+    setIdOfHashtafCHasHashtagError("")
+    setIdOfAttractionDHasHashtagError("")
+    setIdOfHashtafDHasHashtagError("")
+    setIdOfAttractionCHasActivityError("")
+    setIdOfActivityCHasActivityError("")
+    setIdOfAttractionDHasActivityError("")
+    setIdOfActivityDHasActivityError("")
+    setIdOfAttractionCHasAttractionError("")
+    setIdOfCityCHasAttractionError("")
+    setIdOfAttractionDHasAttractionError("")
+    setIdOfCityDHasAttractionError("")
+
+
+  };
   useEffect(() => {
     axios
       .get("http://127.0.0.1:5000/helpers/getCities")
@@ -66,6 +143,7 @@ const Admin = () => {
   }, []);
 
   const onFinish = () => {
+    cleanErrors()
     console.log("Success:");
     let obj = {};
     console.log(pickedAction);
@@ -106,16 +184,20 @@ const Admin = () => {
               .then((responce) => {
                 if (responce.status === 200) {
                   console.log(responce.data);
-                //   setName("");
-                //   setDuration("");
-                //   // setDescription("");
-                //   setFamilyFriendly("");
-                //   setParking("");
-                //   setLongitude("");
-                //   setLatitude("");
-                 }
+                  //   setName("");
+                  //   setDuration("");
+                  //   // setDescription("");
+                  //   setFamilyFriendly("");
+                  //   setParking("");
+                  //   setLongitude("");
+                  //   setLatitude("");
+                }
                 if (responce.status === 206) {
                   console.log(responce.data);
+
+        
+
+
                 }
               })
               .catch((error) => {
@@ -124,6 +206,12 @@ const Admin = () => {
           }
           if (responce.status === 206) {
             console.log(responce.data);
+            
+                  if (responce.data["errors"]["name"])
+                    setNameError(responce.data["errors"]["name"]);
+
+                  if (responce.data["errors"]["latitude"])
+                    setLatitudeError(responce.data["errors"]["latitude"]);
           }
         })
         .catch((error) => {
@@ -144,6 +232,9 @@ const Admin = () => {
             console.log(responce.data);
             // setIdOfAttractionDelete("")
           }
+          if(responce.status===206){
+            setIdOfAttractionDeleteError(responce.data["errors"])
+          }
         })
         .catch((error) => {
           console.error("Error:", error);
@@ -161,6 +252,9 @@ const Admin = () => {
             console.log(responce.data);
             // setHashtagName("")
           }
+          if(responce.status===206){
+            setHashtagNameError(responce.data["errors"]["name"])
+          }
         })
         .catch((error) => {
           console.error("Error:", error);
@@ -175,7 +269,10 @@ const Admin = () => {
         .then((responce) => {
           if (responce.status === 200) {
             console.log(responce.data);
-            // setHashtagId("")
+          }
+          if(responce.status===206){
+            console.log(responce.data);
+            setHashtagIdError(responce.data["errors"]);
           }
         })
         .catch((error) => {
@@ -197,6 +294,10 @@ const Admin = () => {
             console.log(responce.data);
             // setActivityName("")
           }
+          if(responce.status===206){
+            console.log(responce.data)
+            setActivityNameError(responce.data["errors"]["name"])
+          }
         })
         .catch((error) => {
           console.error("Error:", error);
@@ -212,6 +313,9 @@ const Admin = () => {
           if (responce.status === 200) {
             console.log(responce.data);
             // setActivityId("")
+          }
+          if(responce.status==206){
+            setActivityIdError(responce.data["errors"])
           }
         })
         .catch((error) => {
@@ -234,6 +338,10 @@ const Admin = () => {
             // setCityName("")
             // setCityDescription("")
           }
+          if(responce.status===206){
+            console.log(responce.data);
+            setCityNameError(responce.data["errors"]["name"]);
+          }
         })
         .catch((error) => {
           console.error("Error:", error);
@@ -249,6 +357,10 @@ const Admin = () => {
           if (responce.status === 200) {
             console.log(responce.data);
             // setCityId("")
+          }
+          if(responce.status===206){
+            console.log(responce.data)
+            setCityIdError(responce.data["errors"])
           }
         })
         .catch((error) => {
@@ -271,6 +383,24 @@ const Admin = () => {
             // setIdOfAttractionCHasHashtag("")
             // setIdOfHashtafCHasHashtag("")
           }
+          if(responce.status===206){
+            console.log(responce.data)
+            let attractionIdErrors=responce.data["errors"]["idOfAttraction"]
+           if(attractionIdErrors){
+           let joinedStringWithNewLine = attractionIdErrors.join("\n");
+            setIdOfAttractionCHasHashtagError(joinedStringWithNewLine);}
+
+           let hashtagIdErrors = responce.data["errors"]["idOfHashtag"]
+           console.log(hashtagIdErrors);
+
+           if(hashtagIdErrors){
+           let joinedStringWithNewLine = hashtagIdErrors.join("\n");
+             setIdOfHashtafCHasHashtagError(joinedStringWithNewLine);}
+           
+
+
+
+          }
         })
         .catch((error) => {
           console.error("Error:", error);
@@ -291,8 +421,17 @@ const Admin = () => {
             // setIdOfAttractionDHasHashtag("")
             // setIdOfHashtafDHasHashtag("")
           }
-          if(responce.status===206){
-            console.log(responce.data)
+          if (responce.status === 206) {
+            console.log(responce.data);
+            if(responce.data["errors"]["idOfAttraction"])
+              setIdOfAttractionDHasHashtagError(
+                responce.data["errors"]["idOfAttraction"]
+              );
+            if(responce.data["errors"]["idOfHashtag"])
+              setIdOfHashtafDHasHashtagError(
+                responce.data["errors"]["idOfHashtag"]
+              );
+
           }
         })
         .catch((error) => {
@@ -327,9 +466,15 @@ const Admin = () => {
             // setMinAge("")
             // setMaxAge("");
           }
-          if(responce.status===206)
-          {
+          if (responce.status === 206) {
             console.log(responce.data);
+            if(responce.data["errors"]["idOfAttraction"])
+              setIdOfAttractionCHasActivityError(responce.data["errors"]["idOfAttraction"])
+
+            if(responce.data["errors"]["idOfActivity"])
+              setIdOfActivityCHasActivityError(
+                responce.data["errors"]["idOfActivity"]
+              );
 
           }
         })
@@ -339,7 +484,7 @@ const Admin = () => {
     } else if (pickedAction == "deleteHAS_ACTIVITY") {
       axios
         .delete(
-          `http://127.0.0.1:5000/admin/deleteRelationship_HAS_ACTIVITY/${idOfAttractionDHasActivity}/${idOfHashtafDHasActivity}`,
+          `http://127.0.0.1:5000/admin/deleteRelationship_HAS_ACTIVITY/${idOfAttractionDHasActivity}/${idOfActivityDHasActivity}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -350,7 +495,22 @@ const Admin = () => {
           if (responce.status === 200) {
             console.log(responce.data);
             // setIdOfAttractionDHasActivity("")
-            // setIdOfHashtafDHasActivity("")
+            // setidOfActivityDHasActivity("")
+          }
+          if(responce.status===206)
+          {
+            console.log(responce.data);
+            if(responce.data["errors"]["idOfAttraction"])
+             setIdOfAttractionDHasActivityError(
+               responce.data["errors"]["idOfAttraction"]
+             );
+
+
+            if (responce.data["errors"]["idOfActivity"])
+              setIdOfActivityDHasActivityError(
+                responce.data["errors"]["idOfActivity"]
+              );
+
           }
         })
         .catch((error) => {
@@ -376,7 +536,16 @@ const Admin = () => {
             console.log(responce.data);
             // setIdOfAttractionCHasAttraction("")
             // setIdOfCityCHasAttraction("")
+          }
+          if(responce.status===206){
+            console.log(responce.data)
+            if(responce.data['errors']['idOfAttraction'])
+              setIdOfAttractionCHasAttractionError(responce.data['errors']['idOfAttraction'])
 
+            if(responce.data['errors']['idOfCity'])
+              setIdOfCityCHasAttractionError(
+              responce.data["errors"]["idOfCity"]
+            );
           }
         })
         .catch((error) => {
@@ -397,14 +566,27 @@ const Admin = () => {
             console.log(responce.data);
             // setIdOfCityDHasAttraction("")
             // setIdOfAttractionDHasAttraction("")
-
           }
+          if (responce.status === 206) {
+            console.log(responce.data);
+            if (responce.data["errors"]["idOfAttraction"])
+              setIdOfAttractionDHasAttractionError(
+                responce.data["errors"]["idOfAttraction"]
+              );
+
+            if (responce.data["errors"]["idOfCity"])
+              setIdOfCityDHasAttractionError(
+                responce.data["errors"]["idOfCity"]
+              );
+          }
+          
         })
         .catch((error) => {
           console.error("Error:", error);
         });
     }
   };
+
   const onFinishFailed = (errorInfo) => {
     console.log("Failed:", errorInfo);
   };
@@ -424,6 +606,7 @@ const Admin = () => {
   const onSearch = (value) => {
     console.log("search:", value);
   };
+
 
   const filterOption = (input, option) =>
     (option?.label ?? "").toLowerCase().includes(input.toLowerCase());
@@ -481,6 +664,8 @@ const Admin = () => {
                     message: "Please input name!",
                   },
                 ]}
+                validateStatus={nameError ? "error" : ""}
+                help={nameError}
               >
                 <Input />
               </Form.Item>
@@ -503,30 +688,75 @@ const Admin = () => {
                 label="Longitude"
                 name="longitude"
                 value={longitude}
-                onChange={(e) => setLongitude(e.target.value)}
+                onChange={(e) => {
+                  const value = parseFloat(e.target.value);
+                  if (!isNaN(value) && value >= -180 && value <= 180) {
+                    setLongitude(value);
+                  }
+                }}
                 rules={[
                   {
                     required: true,
                     message: "Please input longitude!",
                   },
+                  {
+                    validator: (_, value) => {
+                      const numericValue = parseFloat(value);
+                      if (isNaN(numericValue)) {
+                        return Promise.reject(
+                          new Error("Please enter a valid number.")
+                        );
+                      }
+                      if (numericValue < -180 || numericValue > 180) {
+                        return Promise.reject(
+                          new Error("Longitude must be between -180 and 180.")
+                        );
+                      }
+                      return Promise.resolve();
+                    },
+                  },
                 ]}
               >
-                <Input type="number" />
+                <Input min={-180} max={180} type="number" />
               </Form.Item>
               <Form.Item
                 label="Latitude"
                 name="latitude"
                 value={latitude}
-                onChange={(e) => setLatitude(e.target.value)}
+                onChange={(e) => {
+                  const value = parseFloat(e.target.value);
+                  if (!isNaN(value) && value >= -90 && value <= 90) {
+                    setLatitude(value);
+                  }
+                }}
                 rules={[
                   {
                     required: true,
-                    message: "Please input latitude!",
+                    message: "Please input longitude!",
+                  },
+                  {
+                    validator: (_, value) => {
+                      const numericValue = parseFloat(value);
+                      if (isNaN(numericValue)) {
+                        return Promise.reject(
+                          new Error("Please enter a valid number.")
+                        );
+                      }
+                      if (numericValue < -90 || numericValue > 90) {
+                        return Promise.reject(
+                          new Error("Longitude must be between -90 and 90.")
+                        );
+                      }
+                      return Promise.resolve();
+                    },
                   },
                 ]}
+                validateStatus={latitudeError ? "error" : ""}
+                help={latitudeError}
               >
-                <Input type="number" />
+                <Input min={-90} max={90} type="number" />
               </Form.Item>
+
               <Form.Item
                 label="Duration of visit"
                 name="duration_of_visit"
@@ -591,6 +821,7 @@ const Admin = () => {
                 />
               </Form.Item>
 
+        
               <Form.Item
                 wrapperCol={{
                   offset: 8,
@@ -645,9 +876,16 @@ const Admin = () => {
                   message: "Please input id!",
                 },
               ]}
+              validateStatus={idOfAttractionDeleteError ? "error" : ""}
+              help={idOfAttractionDeleteError}
             >
               <Input />
             </Form.Item>
+            {/* {idOfAttractionDelete && (
+              <p style={{ marginLeft :"25vw",fontSize: "12px", color: "red" }}>
+                {idOfAttractionDeleteError}
+              </p>
+            )} */}
             <Form.Item
               wrapperCol={{
                 offset: 8,
@@ -710,6 +948,8 @@ const Admin = () => {
                   message: "Please input name!",
                 },
               ]}
+              validateStatus={hashtagNameError ? "error" : ""}
+              help={hashtagNameError}
             >
               <Input />
             </Form.Item>
@@ -774,6 +1014,8 @@ const Admin = () => {
                   message: "Please input id!",
                 },
               ]}
+              validateStatus={hashtagIdError ? "error" : ""}
+              help={hashtagIdError}
             >
               <Input />
             </Form.Item>
@@ -839,6 +1081,8 @@ const Admin = () => {
                   message: "Please input name!",
                 },
               ]}
+              validateStatus={activityNameError ? "error" : ""}
+              help={activityNameError}
             >
               <Input />
             </Form.Item>
@@ -904,6 +1148,8 @@ const Admin = () => {
                   message: "Please input id!",
                 },
               ]}
+              validateStatus={activityIdError ? "error" : ""}
+              help={activityIdError}
             >
               <Input />
             </Form.Item>
@@ -969,6 +1215,8 @@ const Admin = () => {
                   message: "Please input name!",
                 },
               ]}
+              validateStatus={cityNameError ? "error" : ""}
+              help={cityNameError}
             >
               <Input />
             </Form.Item>
@@ -1048,6 +1296,8 @@ const Admin = () => {
                   message: "Please input id!",
                 },
               ]}
+              validateStatus={cityIdError ? "error" : ""}
+              help={cityIdError}
             >
               <Input />
             </Form.Item>
@@ -1115,6 +1365,8 @@ const Admin = () => {
                   message: "Please input id!",
                 },
               ]}
+              validateStatus={idOfAttractionCHasHashtagError ? "error" : ""}
+              help={idOfAttractionCHasHashtagError}
             >
               <Input />
             </Form.Item>
@@ -1130,6 +1382,8 @@ const Admin = () => {
                   message: "Please input id!",
                 },
               ]}
+              validateStatus={idOfHashtafCHasHashtagError ? "error" : ""}
+              help={idOfHashtafCHasHashtagError}
             >
               <Input />
             </Form.Item>
@@ -1194,6 +1448,8 @@ const Admin = () => {
                   message: "Please input id!",
                 },
               ]}
+              validateStatus={idOfAttractionDHasHashtagError ? "error" : ""}
+              help={idOfAttractionDHasHashtagError}
             >
               <Input />
             </Form.Item>
@@ -1209,6 +1465,8 @@ const Admin = () => {
                   message: "Please input id!",
                 },
               ]}
+              validateStatus={idOfHashtafDHasHashtagError ? "error" : ""}
+              help={idOfHashtafDHasHashtagError}
             >
               <Input />
             </Form.Item>
@@ -1274,6 +1532,8 @@ const Admin = () => {
                   message: "Please input id!",
                 },
               ]}
+              validateStatus={idOfAttractionCHasActivityError ? "error" : ""}
+              help={idOfAttractionCHasActivityError}
             >
               <Input />
             </Form.Item>
@@ -1289,6 +1549,8 @@ const Admin = () => {
                   message: "Please input id!",
                 },
               ]}
+              validateStatus={idOfActivityCHasActivityError ? "error" : ""}
+              help={idOfActivityCHasActivityError}
             >
               <Input />
             </Form.Item>
@@ -1405,6 +1667,8 @@ const Admin = () => {
                   message: "Please input id!",
                 },
               ]}
+              validateStatus={idOfAttractionDHasActivityError ? "error" : ""}
+              help={idOfAttractionDHasActivityError}
             >
               <Input />
             </Form.Item>
@@ -1412,14 +1676,16 @@ const Admin = () => {
             <Form.Item
               label="Id of activity"
               name="idOfActivity"
-              value={idOfHashtafDHasActivity}
-              onChange={(e) => setIdOfHashtafDHasActivity(e.target.value)}
+              value={idOfActivityDHasActivity}
+              onChange={(e) => setIdOfActivityDHasActivity(e.target.value)}
               rules={[
                 {
                   required: true,
                   message: "Please input id!",
                 },
               ]}
+              validateStatus={idOfActivityDHasActivityError ? "error" : ""}
+              help={idOfActivityDHasActivityError}
             >
               <Input />
             </Form.Item>
@@ -1485,6 +1751,8 @@ const Admin = () => {
                   message: "Please input id!",
                 },
               ]}
+              validateStatus={idOfAttractionCHasAttractionError ? "error" : ""}
+              help={idOfAttractionCHasAttractionError}
             >
               <Input />
             </Form.Item>
@@ -1500,6 +1768,8 @@ const Admin = () => {
                   message: "Please input id!",
                 },
               ]}
+              validateStatus={idOfCityCHasAttractionError ? "error" : ""}
+              help={idOfCityCHasAttractionError}
             >
               <Input />
             </Form.Item>
@@ -1564,6 +1834,8 @@ const Admin = () => {
                   message: "Please input id!",
                 },
               ]}
+              validateStatus={idOfAttractionDHasAttractionError ? "error" : ""}
+              help={idOfAttractionDHasAttractionError}
             >
               <Input />
             </Form.Item>
@@ -1579,6 +1851,8 @@ const Admin = () => {
                   message: "Please input id!",
                 },
               ]}
+              validateStatus={idOfCityDHasAttractionError ? "error" : ""}
+              help={idOfCityDHasAttractionError}
             >
               <Input />
             </Form.Item>
@@ -1601,7 +1875,6 @@ const Admin = () => {
           </Form>
         </Space>
       </>
-      <Alert message="Error Text" type="error" />
     </>
   );
 };

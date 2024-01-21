@@ -54,7 +54,17 @@ class LogInForm(FlaskForm):
     # remember = BooleanField('Remember Me')
     
 class AddAttractionForm(FlaskForm):
-    def validate_longitude(formica,l):
+    
+    name=StringField('Name', validators=[DataRequired()])
+    description= StringField('Description', validators=[DataRequired()])
+    longitude=FloatField('Longitude', validators=[DataRequired()])
+    latitude=FloatField('Latitude', validators=[DataRequired()])
+    duration_of_visit=TimeField('Duration of visit', validators=[DataRequired()])
+    parking=BooleanField("Parking")
+    family_friendly=BooleanField("Family friendly")
+    submit = SubmitField('Add')
+    
+    def validate_latitude(formica,latitude):
         p=formica.longitude.data
         l=formica.latitude.data
         attractions=(
@@ -68,6 +78,8 @@ class AddAttractionForm(FlaskForm):
         listOfAttractions=list(attractions)
         if listOfAttractions:
             raise ValidationError('Some attraction already exists at that location') 
+       
+    def validate_name(formica,name):
         attractions=(
           match()
           .node(labels="Attraction",variable="a")
@@ -79,16 +91,6 @@ class AddAttractionForm(FlaskForm):
 
         if listOfAttractions:
             raise ValidationError('Some attraction already exists with that name') 
-        
-            
-    name=StringField('Name', validators=[DataRequired()])
-    description= StringField('Description', validators=[DataRequired()])
-    longitude=FloatField('Longitude', validators=[DataRequired(),validate_longitude])
-    latitude=FloatField('Latitude', validators=[DataRequired(),validate_longitude])
-    duration_of_visit=TimeField('Duration of visit', validators=[DataRequired()])
-    parking=BooleanField("Parking")
-    family_friendly=BooleanField("Family friendly")
-    submit = SubmitField('Add')
     
 class AddHashtagForm(FlaskForm):
     name=StringField('Name', validators=[DataRequired()])
@@ -146,7 +148,7 @@ class AddHasHashForm(FlaskForm):
     submit = SubmitField('Add')
     tupleForResult=("","")
     
-    def validate_idOfAttraction(form,nzm):
+    def validate_idOfAttraction(form,idOfAttraction):
         attractions=(
             match()
             .node(labels="Attraction",variable="attraction")
@@ -157,9 +159,8 @@ class AddHasHashForm(FlaskForm):
         listOfAttractions=list(attractions)
         if not listOfAttractions:
             raise ValidationError('Attraction with specific id does not exist!')
-        attraction:Attraction =listOfAttractions[0]["attraction"]
-        idOfAttraction=attraction._id
-       
+  
+    def validate_idOfHashtag(form,idOfHashtag):
         hashtags=(
             match()
             .node(labels="Hashtag",variable="hashtag")
@@ -184,7 +185,17 @@ class AddHasHashForm(FlaskForm):
         )
         listOfhasHashtag=list(hasHashtag)
         if listOfhasHashtag:
-            raise ValidationError('Attraction with specific id already has hastag with specific id !')
+            raise ValidationError('Relationship already exists!')
+        attractions=(
+            match()
+            .node(labels="Attraction",variable="attraction")
+            .where(item="attraction.id",operator=Operator.EQUAL,literal=form.idOfAttraction.data)
+            .return_("attraction")
+            .execute()    
+        )
+        listOfAttractions=list(attractions)
+        attraction:Attraction=listOfAttractions[0]["attraction"]
+        idOfAttraction=attraction._id
         form.tupleForResult=(idOfAttraction,idOfHashtag)
             
 class AddHasActivityForm(FlaskForm):
@@ -199,7 +210,7 @@ class AddHasActivityForm(FlaskForm):
     
    
     
-    def validate_idOfAttraction(form,nzm):
+    def validate_idOfAttraction(form,idOfAttraction):
         attractions=(
             match()
             .node(labels="Attraction",variable="attraction")
@@ -212,7 +223,11 @@ class AddHasActivityForm(FlaskForm):
             raise ValidationError('Attraction with specific id does not exist!')
         attraction:Attraction =listOfAttractions[0]["attraction"]
         idOfAttraction=attraction._id
-       
+        form.tupleForResult=(idOfAttraction,None)
+      
+        
+        
+    def validate_idOfActivity(form,idOfActivity):
         activities=(
             match()
             .node(labels="Activity",variable="activity")
@@ -226,7 +241,6 @@ class AddHasActivityForm(FlaskForm):
         activity:Activity =listOfactivities[0]["activity"]
         idOfActivity=activity._id
         
-        
         hasActivity=(
             match()
             .node(labels="Attraction",variable="attraction",id=form.idOfAttraction.data)
@@ -237,7 +251,8 @@ class AddHasActivityForm(FlaskForm):
         )
         listOfhasActivity=list(hasActivity)
         if listOfhasActivity:
-            raise ValidationError('Attraction with specific id already has activity with specific id !')
+            raise ValidationError('Realtionship already exists!')
+        idOfAttraction=form.tupleForResult[0]
         form.tupleForResult=(idOfAttraction,idOfActivity)
               
 class AddVisitedForm(FlaskForm):
@@ -344,7 +359,7 @@ class AddHasAttractionForm(FlaskForm):
     submit = SubmitField('Add')
     tupleForResult=("","")
     
-    def validate_idOfCity(form,nzm):
+    def validate_idOfCity(form,idOfCity):
         cities=(
             match()
             .node(labels="City",variable="city")
@@ -357,6 +372,9 @@ class AddHasAttractionForm(FlaskForm):
             raise ValidationError('City with specific id does not exist!')
         city:City =listOfCities[0]["city"]
         idOfCity=city._id
+        form.tupleForResult=(idOfCity,None)
+        
+    def validate_idOfAttraction(form,idOfAttraction):
        
         attractions=(
             match()
@@ -383,6 +401,7 @@ class AddHasAttractionForm(FlaskForm):
         listOfHasAttraction=list(hasAttraction)
         if listOfHasAttraction:
             raise ValidationError('City with specific id already has attraction with specific id !')
+        idOfCity=form.tupleForResult[0]
         form.tupleForResult=(idOfCity,idOfAttraction)
  
 class DeleteHasHashtagForm(FlaskForm):
@@ -390,7 +409,7 @@ class DeleteHasHashtagForm(FlaskForm):
     idOfHashtag=StringField("Id of hashtag",validators=[DataRequired()])
 
     
-    def validate_idOfAttraction(form,nzm):
+    def validate_idOfAttraction(form,idOfAttraction):
         attractions=(
             match()
             .node(labels="Attraction",variable="attraction")
@@ -403,7 +422,10 @@ class DeleteHasHashtagForm(FlaskForm):
             raise ValidationError('Attraction with specific id does not exist!')
         attraction:Attraction =listOfAttractions[0]["attraction"]
         idOfAttraction=attraction._id
-       
+        form.tupleForResult = (idOfAttraction, None)
+
+        
+    def validate_idOfHashtag(form,idOfHashtag):
         hashtags=(
             match()
             .node(labels="Hashtag",variable="hashtag")
@@ -429,13 +451,14 @@ class DeleteHasHashtagForm(FlaskForm):
         listOfhasHashtag=list(hasHashtag)
         if not listOfhasHashtag:
             raise ValidationError('Attraction with specific id does not have hastag with specific id !')
-        form.tupleForResult=(idOfAttraction,idOfHashtag)
+        idOfAttraction = form.tupleForResult[0]
+        form.tupleForResult = (idOfAttraction, idOfHashtag)
           
 class DeleteHasActivityForm(FlaskForm):
     idOfAttraction=StringField("Id of attraction",validators=[DataRequired()])
     idOfActivity=StringField("Id of activity",validators=[DataRequired()])
 
-    def validate_idOfAttraction(form,nzm):
+    def validate_idOfAttraction(form,idOfAttraction):
         attractions=(
             match()
             .node(labels="Attraction",variable="attraction")
@@ -446,8 +469,8 @@ class DeleteHasActivityForm(FlaskForm):
         listOfAttractions=list(attractions)
         if not listOfAttractions:
             raise ValidationError('Attraction with specific id does not exist!')
-        attraction:Attraction =listOfAttractions[0]["attraction"]
-       
+        
+    def validate_idOfActivity(form,idOfActivity): 
         activities=(
             match()
             .node(labels="Activity",variable="activity")
@@ -458,7 +481,6 @@ class DeleteHasActivityForm(FlaskForm):
         listOfactivities=list(activities)
         if not listOfactivities:
             raise ValidationError('Activity with specific id does not exist!')
-        activity:Activity =listOfactivities[0]["activity"]
         
         
         hasActivity=(
@@ -522,7 +544,7 @@ class DeleteHasAttractionForm(FlaskForm):
     idOfAttraction=StringField("Id of attraction",validators=[DataRequired()])
     submit = SubmitField('Delete')
     
-    def validate_idOfCity(form,nzm):
+    def validate_idOfCity(form,idOfCity):
         cities=(
             match()
             .node(labels="City",variable="city")
@@ -533,7 +555,8 @@ class DeleteHasAttractionForm(FlaskForm):
         listOfCities=list(cities)
         if not listOfCities:
             raise ValidationError('City with specific id does not exist!')
-       
+        
+    def validate_idOfAttraction(form,idOfAttraction):
         attractions=(
             match()
             .node(labels="Attraction",variable="attraction")

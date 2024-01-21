@@ -16,6 +16,7 @@ def load_user(user_id):
           )
     return list(users)[0]["user"]
 
+
 class User(Node,UserMixin):
     id:str = Field(index=True, unique=True, exists=True, db=db)
     username:str = Field(index=True, unique=True, exists=True, db=db)

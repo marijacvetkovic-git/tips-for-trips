@@ -35,11 +35,17 @@ def addImage(attractionId):
 @jwt_required()
 
 def deleteAttraction(attractionId):
-    query=f""" MATCH (a:Attraction) WHERE a.id='{attractionId}'
-    DETACH DELETE a
-    """
-    db.execute(query)    
-    return jsonify({}),200
+    query =f""" MATCH (a:Attraction) WHERE a.id='{attractionId}' return a"""
+    attraction=list(db.execute_and_fetch(query))
+    if(attraction):
+        query=f""" MATCH (a:Attraction) WHERE a.id='{attractionId}'
+        DETACH DELETE a
+        """
+        db.execute(query)    
+        return jsonify({}),200
+    else:
+        errors={"errors":"No attraction found!"}
+        return jsonify(errors), 206
     
         
   
@@ -75,11 +81,16 @@ def createAttraction():
 @jwt_required()
 
 def deleteHashtag(hashtagId):
-    query=f""" MATCH (a:Hashtag) WHERE a.id='{hashtagId}'
-    DETACH DELETE a
-    """
-    db.execute(query)    
-    return jsonify({"Message":"Hashtag deleted"}),200
+    query=f""" MATCH (a:Hashtag) WHERE a.id='{hashtagId}' return a"""
+    hashtag=list(db.execute_and_fetch(query))
+    if(hashtag):
+        query=f""" MATCH (a:Hashtag) WHERE a.id='{hashtagId}'
+        DETACH DELETE a
+        """
+        db.execute(query)    
+        return jsonify({"Message":"Hashtag deleted"}),200
+    else:
+        return jsonify({"errors":"Hashtag with that id does not exist!"}),206
    
 
 @admin.route("/createHashtag/<string:hashName>",methods=['POST'])
@@ -104,11 +115,17 @@ def createHashtag(hashName):
 @jwt_required()
 
 def deleteActivity(activityId):
-    query=f""" MATCH (a:Activity) WHERE a.id='{activityId}'
-    DETACH DELETE a
-    """
-    db.execute(query)    
-    return jsonify({"Message":"Activity deleted"}),200
+    query=f"""  MATCH (a:Activity) WHERE a.id='{activityId}' return a"""
+    activity=list(db.execute_and_fetch(query))
+    if(activity):
+        query=f""" MATCH (a:Activity) WHERE a.id='{activityId}'
+        DETACH DELETE a
+        """
+        db.execute(query)    
+        return jsonify({"Message":"Activity deleted"}),200
+    else:
+        return jsonify({"errors":"Activity with that id does not exist"}),206
+        
      
         
 @admin.route("/createActivity/<string:activityName>",methods=['POST'])
@@ -153,11 +170,17 @@ def createCity():
 @jwt_required()
 
 def deleteCity(cityId):
-    query=f""" MATCH (a:City) WHERE a.id='{cityId}'
-    DETACH DELETE a
-    """
-    db.execute(query)
-    return jsonify({"Message":"City deleted"}),200
+    query=f"""  MATCH (a:City) WHERE a.id='{cityId}' RETURN a"""
+    cities=list(db.execute_and_fetch(query))
+    if(cities):
+        query=f""" MATCH (a:City) WHERE a.id='{cityId}'
+        DETACH DELETE a
+        """
+        db.execute(query)
+        return jsonify({"Message":"City deleted"}),200
+    else:
+        return jsonify({"errors":"City with that id does not exist"}),206
+        
     
 
 @admin.route("/createRelationship_HAS_HASHTAG/<string:idOfAttraction>/<string:idOfHashtag>",methods=['POST'])
