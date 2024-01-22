@@ -3,8 +3,9 @@ import { useLocation } from "react-router-dom";
 import axios from "axios";
 import { Image, List } from "antd";
 import { Carousel } from "antd";
-import { Button, Modal, Space } from "antd";
-import { Col, Divider, Row } from "antd";
+import { Button, Modal, Space,Popover,Col,Row,Rate } from "antd";
+import { CheckCircleTwoTone, QuestionCircleTwoTone } from "@ant-design/icons";
+import { getUserId } from "../utils";
 
 const Attraction = () => {
   const location = useLocation();
@@ -15,9 +16,12 @@ const Attraction = () => {
   const [attractionRelationship, setAttractionRelationship] = useState([]);
   const [attractionHashtags, setAttractionHashtags] = useState([]);
   const [attractionImages,setAttractionImages]=useState([])
+  const [attractionAvgRate,setAttractionAvgRate]=useState(5)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState("");
   const [modalTitle, setModalTitle] = useState("");
+  const [visited,setVisited]=useState(false)
+  const [rateValue,setRateValue]=useState(0)
   const showModal = (item, content) => {
     console.log(content);
     let experience = "not needed";
@@ -39,7 +43,7 @@ const Attraction = () => {
     setIsModalOpen(false);
   };
   // const onHashtag=()=>{}
-  useEffect(() => {
+  const getData=()=>{
     console.log(localStorage.getItem("token"));
     console.log(attractionId);
     axios
@@ -52,14 +56,57 @@ const Attraction = () => {
           setAttractionActivities(responce.data[0]["activities"]);
           setAttractionRelationship(responce.data[0]["relationship"]);
           setAttractionHashtags(responce.data[0]["hashtags"]);
-          setAttractionImages(responce.data[0]["images"])
+          setAttractionImages(responce.data[0]["images"]);
+          setAttractionAvgRate(responce.data[0]["avgRate"]);
           console.log(responce.data[0]["images"]);
         }
       })
       .catch((error) => {
         console.error("Error:", error);
       });
-  }, []);
+  }
+  useEffect(() => {getData()},[]);
+  const [open, setOpen] = useState(false);
+  const hide = () => {
+    console.log("Hide")
+    setOpen(false);
+  };
+  const done = () => {
+    console.log(rateValue);
+    console.log("Done");
+    const idOfAttraction=attractionId
+    const idOfUser=getUserId()
+    const rate=rateValue
+    const body = {
+      idOfAttraction,
+      idOfUser,
+      rate,
+    };
+    axios
+      .post(`http://127.0.0.1:5000/user/createRelationship_VISITED`, body, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      })
+      .then((responce) => {
+        if (responce.status === 200) {
+          setVisited(true)
+          setOpen(false)
+          getData()
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+    
+
+  };
+  const handleOpenChange = (newOpen) => {
+    console.log("onChange")
+    console.log(newOpen)
+
+    setOpen(newOpen);
+  };
    const [currentSlide, setCurrentSlide] = useState(0);
 
 
@@ -72,6 +119,7 @@ const prevSlide = () => {
     (prevSlide) => (prevSlide - 1 + attractionImages.length) % attractionImages.length
   );
 };
+
 
 const carouselStyle = {
   width: "60%", // Podesite željenu širinu karusela
@@ -91,11 +139,126 @@ const imageStyle = {
   height: "95vh",
   flex: "0 0 auto",
 };
+
+useEffect(()=>{
+  if(localStorage.getItem("token")){
+  axios
+    .get(`http://127.0.0.1:5000/user/isVisited/${attractionId}/${getUserId()}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    })
+    .then((responce) => {
+      if (responce.status === 200) {
+        console.log(responce.data);
+        setVisited(responce.data);
+      }
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+    });
+
+  }
+},[visited])
+
+
+const rateContent = (
+  <Rate value={rateValue} onChange={(value) => setRateValue(value)} />
+);
   return (
     <>
-      <div>
-        <h1 style={{ textAlign: "center" }}>{attractionName}</h1>
+      <div
+        style={{
+          // display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginBottom: "10px",
+            textAlign: "center",
+            flex: 1,
+          }}
+        >
+          <h1 style={{ margin: 0 }}>{attractionName}</h1>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "end"}}>
+          {localStorage.getItem("token") &&
+            (visited ? (
+              <>
+                <CheckCircleTwoTone
+                  label="Visited"
+                  twoToneColor="#52c41a"
+                  style={{ fontSize: "24px", marginRight: "5px" }}
+                />
+                <span style={{ color: "#52c41a" }}>Visited</span>
+              </>
+            ) : (
+              <>
+                <Popover
+                  content={
+                    <div>
+                      {rateContent}
+                      <div>
+                        <a onClick={hide}>Close</a>
+                      </div>
+                      <div>
+                        {" "}
+                        <a onClick={done}>Rate</a>
+                      </div>
+                    </div>
+                  }
+                  title="Rate visited attraction"
+                  trigger="click"
+                  open={open}
+                  onOpenChange={handleOpenChange}
+                >
+                  <a style={{ color: "#C44C37" }}>
+                    <QuestionCircleTwoTone
+                      twoToneColor="#C44C37"
+                      style={{ fontSize: "24px", marginRight: "5px" }}
+                    />
+                    Not visited yet
+                  </a>
+                </Popover>
+                {/* <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault(); // Ovo sprečava defaultno ponašanje linka (npr. da se preusmeri na drugu stranicu)
+                    handleNotVisitedClick();
+                  }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    textDecoration: "underline",
+                    color: "#C44C37",
+                  }}
+                >
+                  <Popover
+                    content={<a onClick={hide}>Close</a>}
+                    title="Title"
+                    trigger="click"
+                    open={open}
+                    onOpenChange={handleNotVisitedClick}
+                  >
+                    <span>
+                      <QuestionCircleTwoTone
+                        twoToneColor="#C44C37"
+                        style={{ fontSize: "24px", marginRight: "5px" }}
+                      />
+                      Not visited yet
+                    </span>
+                  </Popover>
+                </a> */}
+              </>
+            ))}
+        </div>
       </div>
+
       <div style={carouselStyle}>
         <div style={slideContainerStyle}>
           {attractionImages.map((imageUrl, index) => (
@@ -130,7 +293,10 @@ const imageStyle = {
           ))}
         </div>
       </div>
-
+      <>
+        <Rate disabled value={attractionAvgRate}  />
+        <span>{attractionAvgRate.toFixed(2)}</span>
+      </>
       <div>
         <h2>
           <i>Fun facts:</i>

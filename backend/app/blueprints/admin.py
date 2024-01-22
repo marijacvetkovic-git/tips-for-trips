@@ -10,6 +10,7 @@ from app.models import HasActivity, HasAttraction, HasHashtag, HasImage, Image, 
 admin= Blueprint("admin",__name__,static_folder="static",template_folder="templates")
 
 @admin.route("/addImage/<string:attractionId>",methods=['POST'])
+@jwt_required()
 def addImage(attractionId):
     req_data = request.get_json() 
     path=req_data.get("path")
@@ -38,8 +39,10 @@ def deleteAttraction(attractionId):
     query =f""" MATCH (a:Attraction) WHERE a.id='{attractionId}' return a"""
     attraction=list(db.execute_and_fetch(query))
     if(attraction):
+        
         query=f""" MATCH (a:Attraction) WHERE a.id='{attractionId}'
-        DETACH DELETE a
+        OPTIONAL MATCH (a)-[r:HAS_IMAGE]->(i:Image)
+        DETACH DELETE a,r,i
         """
         db.execute(query)    
         return jsonify({}),200

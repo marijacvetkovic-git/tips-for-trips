@@ -62,6 +62,7 @@ function App() {
           style={{
             display: "flex",
             alignItems: "center",
+            // backgroundColor: "#2B532D",
           }}
         >
           <div className="demo-logo" />
@@ -70,6 +71,7 @@ function App() {
             mode="horizontal"
             defaultSelectedKeys={"1"}
             style={{
+              // backgroundColor: "#2B532D",
               flex: 1,
               minWidth: 0,
             }}

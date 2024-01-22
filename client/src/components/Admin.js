@@ -1,8 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
+import { useDropzone } from "react-dropzone";
 import dayjs from "dayjs";
 import axios from "axios";
 
-import { Select, TimePicker, Button, Checkbox, Form, Input, Space, message, Upload } from "antd";
+import {
+  Select,
+  TimePicker,
+  Button,
+  Checkbox,
+  Form,
+  Input,
+  Space,
+  message,
+  Upload,
+} from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import FormItem from "antd/es/form/FormItem";
 
@@ -18,7 +29,8 @@ const Admin = () => {
   const [pickedCity, setPickedCity] = useState("");
 
   const [idOfAttractionDelete, setIdOfAttractionDelete] = useState("");
-  const [idOfAttractionDeleteError, setIdOfAttractionDeleteError] = useState("");
+  const [idOfAttractionDeleteError, setIdOfAttractionDeleteError] =
+    useState("");
 
   const [nameError, setNameError] = useState("");
   const [latitudeError, setLatitudeError] = useState("");
@@ -30,7 +42,6 @@ const Admin = () => {
 
   const [hashtagId, setHashtagId] = useState("");
   const [hashtagIdError, setHashtagIdError] = useState("");
-
 
   const [activityName, setActivityName] = useState("");
   const [activityNameError, setActivityNameError] = useState("");
@@ -48,85 +59,86 @@ const Admin = () => {
 
   const [idOfAttractionCHasHashtag, setIdOfAttractionCHasHashtag] =
     useState("");
-    const [idOfAttractionCHasHashtagError, setIdOfAttractionCHasHashtagError] =
-      useState("");
-      
-  const [idOfHashtafCHasHashtag, setIdOfHashtafCHasHashtag] = useState("");
-    const [idOfHashtafCHasHashtagError, setIdOfHashtafCHasHashtagError] = useState("");
+  const [idOfAttractionCHasHashtagError, setIdOfAttractionCHasHashtagError] =
+    useState("");
 
+  const [idOfHashtafCHasHashtag, setIdOfHashtafCHasHashtag] = useState("");
+  const [idOfHashtafCHasHashtagError, setIdOfHashtafCHasHashtagError] =
+    useState("");
 
   const [idOfAttractionDHasHashtag, setIdOfAttractionDHasHashtag] =
     useState("");
   const [idOfHashtafDHasHashtag, setIdOfHashtafDHasHashtag] = useState("");
-  
 
-    const [idOfAttractionDHasHashtagError, setIdOfAttractionDHasHashtagError] =
-      useState("");
-    const [idOfHashtafDHasHashtagError, setIdOfHashtafDHasHashtagError] = useState("");
-
+  const [idOfAttractionDHasHashtagError, setIdOfAttractionDHasHashtagError] =
+    useState("");
+  const [idOfHashtafDHasHashtagError, setIdOfHashtafDHasHashtagError] =
+    useState("");
 
   const [idOfAttractionCHasActivity, setIdOfAttractionCHasActivity] =
     useState("");
   const [idOfActivityCHasActivity, setIdOfActivityCHasActivity] = useState("");
-    const [idOfAttractionCHasActivityError, setIdOfAttractionCHasActivityError] =
-      useState("");
-    const [idOfActivityCHasActivityError, setIdOfActivityCHasActivityError] =
-      useState("");
+  const [idOfAttractionCHasActivityError, setIdOfAttractionCHasActivityError] =
+    useState("");
+  const [idOfActivityCHasActivityError, setIdOfActivityCHasActivityError] =
+    useState("");
   const [durationOfActivity, setDurationOfActivity] = useState("");
 
   const [idOfAttractionDHasActivity, setIdOfAttractionDHasActivity] =
     useState("");
   const [idOfActivityDHasActivity, setIdOfActivityDHasActivity] = useState("");
 
-    const [idOfAttractionDHasActivityError, setIdOfAttractionDHasActivityError] =
+  const [idOfAttractionDHasActivityError, setIdOfAttractionDHasActivityError] =
     useState("");
-  const [idOfActivityDHasActivityError, setIdOfActivityDHasActivityError] = useState("");
+  const [idOfActivityDHasActivityError, setIdOfActivityDHasActivityError] =
+    useState("");
 
   const [idOfAttractionCHasAttraction, setIdOfAttractionCHasAttraction] =
     useState("");
   const [idOfCityCHasAttraction, setIdOfCityCHasAttraction] = useState("");
- const [idOfAttractionCHasAttractionError, setIdOfAttractionCHasAttractionError] =
-   useState("");
- const [idOfCityCHasAttractionError, setIdOfCityCHasAttractionError] = useState("");
-
+  const [
+    idOfAttractionCHasAttractionError,
+    setIdOfAttractionCHasAttractionError,
+  ] = useState("");
+  const [idOfCityCHasAttractionError, setIdOfCityCHasAttractionError] =
+    useState("");
 
   const [idOfAttractionDHasAttraction, setIdOfAttractionDHasAttraction] =
     useState("");
   const [idOfCityDHasAttraction, setIdOfCityDHasAttraction] = useState("");
 
-    const [idOfAttractionDHasAttractionError, setIdOfAttractionDHasAttractionError] =
-      useState("");
-    const [idOfCityDHasAttractionError, setIdOfCityDHasAttractionError] = useState("");
+  const [
+    idOfAttractionDHasAttractionError,
+    setIdOfAttractionDHasAttractionError,
+  ] = useState("");
+  const [idOfCityDHasAttractionError, setIdOfCityDHasAttractionError] =
+    useState("");
 
   const [experience, setExperience] = useState(false);
   const [minAge, setMinAge] = useState(0);
   const [maxAge, setMaxAge] = useState(0);
 
-
-
   const cleanErrors = () => {
-    setIdOfAttractionDeleteError("")
-    setLatitudeError("")
-    setHashtagNameError("")
-    setHashtagIdError("")
-    setActivityNameError("")
-    setActivityIdError("")
-    setCityNameError("")
-    setCityIdError("")
-    setIdOfAttractionCHasHashtagError("")
-    setIdOfHashtafCHasHashtagError("")
-    setIdOfAttractionDHasHashtagError("")
-    setIdOfHashtafDHasHashtagError("")
-    setIdOfAttractionCHasActivityError("")
-    setIdOfActivityCHasActivityError("")
-    setIdOfAttractionDHasActivityError("")
-    setIdOfActivityDHasActivityError("")
-    setIdOfAttractionCHasAttractionError("")
-    setIdOfCityCHasAttractionError("")
-    setIdOfAttractionDHasAttractionError("")
-    setIdOfCityDHasAttractionError("")
-
-
+    setIdOfAttractionDeleteError("");
+    setLatitudeError("");
+    setHashtagNameError("");
+    setHashtagIdError("");
+    setActivityNameError("");
+    setActivityIdError("");
+    setCityNameError("");
+    setCityIdError("");
+    setIdOfAttractionCHasHashtagError("");
+    setIdOfHashtafCHasHashtagError("");
+    setIdOfAttractionDHasHashtagError("");
+    setIdOfHashtafDHasHashtagError("");
+    setIdOfAttractionCHasActivityError("");
+    setIdOfActivityCHasActivityError("");
+    setIdOfAttractionDHasActivityError("");
+    setIdOfActivityDHasActivityError("");
+    setIdOfAttractionCHasAttractionError("");
+    setIdOfCityCHasAttractionError("");
+    setIdOfAttractionDHasAttractionError("");
+    setIdOfCityDHasAttractionError("");
   };
   useEffect(() => {
     axios
@@ -143,7 +155,8 @@ const Admin = () => {
   }, []);
 
   const onFinish = () => {
-    cleanErrors()
+    cleanErrors();
+    let idOfAttractionCHasAttraction = 0;
     console.log("Success:");
     let obj = {};
     console.log(pickedAction);
@@ -166,7 +179,7 @@ const Admin = () => {
           if (responce.status === 200) {
             console.log(responce.data);
             const idOfCityCHasAttraction = pickedCity;
-            const idOfAttractionCHasAttraction = responce.data["id"];
+            idOfAttractionCHasAttraction = responce.data["id"];
             const body = {
               idOfCityCHasAttraction,
               idOfAttractionCHasAttraction,
@@ -183,21 +196,37 @@ const Admin = () => {
               )
               .then((responce) => {
                 if (responce.status === 200) {
-                  console.log(responce.data);
-                  //   setName("");
-                  //   setDuration("");
-                  //   // setDescription("");
-                  //   setFamilyFriendly("");
-                  //   setParking("");
-                  //   setLongitude("");
-                  //   setLatitude("");
+                  selectedImages.forEach((item) => {
+                    const path = `assets/${name}/${item.path}`;
+                    console.log(path);
+                    const body = { path };
+                    axios
+                      .post(
+                        `http://127.0.0.1:5000/admin/addImage/${idOfAttractionCHasAttraction}`,
+                        body,
+                        {
+                          headers: {
+                            Authorization: `Bearer ${localStorage.getItem(
+                              "token"
+                            )}`,
+                          },
+                        }
+                      )
+                      .then((responce) => {
+                        if (responce.status === 200) {
+                          console.log(responce.data);
+                        }
+                        if (responce.status === 206) {
+                          console.log(responce.data);
+                        }
+                      })
+                      .catch((error) => {
+                        console.error("Error:", error);
+                      });
+                  });
                 }
                 if (responce.status === 206) {
                   console.log(responce.data);
-
-        
-
-
                 }
               })
               .catch((error) => {
@@ -206,12 +235,12 @@ const Admin = () => {
           }
           if (responce.status === 206) {
             console.log(responce.data);
-            
-                  if (responce.data["errors"]["name"])
-                    setNameError(responce.data["errors"]["name"]);
 
-                  if (responce.data["errors"]["latitude"])
-                    setLatitudeError(responce.data["errors"]["latitude"]);
+            if (responce.data["errors"]["name"])
+              setNameError(responce.data["errors"]["name"]);
+
+            if (responce.data["errors"]["latitude"])
+              setLatitudeError(responce.data["errors"]["latitude"]);
           }
         })
         .catch((error) => {
@@ -232,8 +261,8 @@ const Admin = () => {
             console.log(responce.data);
             // setIdOfAttractionDelete("")
           }
-          if(responce.status===206){
-            setIdOfAttractionDeleteError(responce.data["errors"])
+          if (responce.status === 206) {
+            setIdOfAttractionDeleteError(responce.data["errors"]);
           }
         })
         .catch((error) => {
@@ -252,8 +281,8 @@ const Admin = () => {
             console.log(responce.data);
             // setHashtagName("")
           }
-          if(responce.status===206){
-            setHashtagNameError(responce.data["errors"]["name"])
+          if (responce.status === 206) {
+            setHashtagNameError(responce.data["errors"]["name"]);
           }
         })
         .catch((error) => {
@@ -270,7 +299,7 @@ const Admin = () => {
           if (responce.status === 200) {
             console.log(responce.data);
           }
-          if(responce.status===206){
+          if (responce.status === 206) {
             console.log(responce.data);
             setHashtagIdError(responce.data["errors"]);
           }
@@ -294,9 +323,9 @@ const Admin = () => {
             console.log(responce.data);
             // setActivityName("")
           }
-          if(responce.status===206){
-            console.log(responce.data)
-            setActivityNameError(responce.data["errors"]["name"])
+          if (responce.status === 206) {
+            console.log(responce.data);
+            setActivityNameError(responce.data["errors"]["name"]);
           }
         })
         .catch((error) => {
@@ -314,8 +343,8 @@ const Admin = () => {
             console.log(responce.data);
             // setActivityId("")
           }
-          if(responce.status==206){
-            setActivityIdError(responce.data["errors"])
+          if (responce.status == 206) {
+            setActivityIdError(responce.data["errors"]);
           }
         })
         .catch((error) => {
@@ -338,7 +367,7 @@ const Admin = () => {
             // setCityName("")
             // setCityDescription("")
           }
-          if(responce.status===206){
+          if (responce.status === 206) {
             console.log(responce.data);
             setCityNameError(responce.data["errors"]["name"]);
           }
@@ -358,9 +387,9 @@ const Admin = () => {
             console.log(responce.data);
             // setCityId("")
           }
-          if(responce.status===206){
-            console.log(responce.data)
-            setCityIdError(responce.data["errors"])
+          if (responce.status === 206) {
+            console.log(responce.data);
+            setCityIdError(responce.data["errors"]);
           }
         })
         .catch((error) => {
@@ -383,23 +412,21 @@ const Admin = () => {
             // setIdOfAttractionCHasHashtag("")
             // setIdOfHashtafCHasHashtag("")
           }
-          if(responce.status===206){
-            console.log(responce.data)
-            let attractionIdErrors=responce.data["errors"]["idOfAttraction"]
-           if(attractionIdErrors){
-           let joinedStringWithNewLine = attractionIdErrors.join("\n");
-            setIdOfAttractionCHasHashtagError(joinedStringWithNewLine);}
+          if (responce.status === 206) {
+            console.log(responce.data);
+            let attractionIdErrors = responce.data["errors"]["idOfAttraction"];
+            if (attractionIdErrors) {
+              let joinedStringWithNewLine = attractionIdErrors.join("\n");
+              setIdOfAttractionCHasHashtagError(joinedStringWithNewLine);
+            }
 
-           let hashtagIdErrors = responce.data["errors"]["idOfHashtag"]
-           console.log(hashtagIdErrors);
+            let hashtagIdErrors = responce.data["errors"]["idOfHashtag"];
+            console.log(hashtagIdErrors);
 
-           if(hashtagIdErrors){
-           let joinedStringWithNewLine = hashtagIdErrors.join("\n");
-             setIdOfHashtafCHasHashtagError(joinedStringWithNewLine);}
-           
-
-
-
+            if (hashtagIdErrors) {
+              let joinedStringWithNewLine = hashtagIdErrors.join("\n");
+              setIdOfHashtafCHasHashtagError(joinedStringWithNewLine);
+            }
           }
         })
         .catch((error) => {
@@ -423,15 +450,14 @@ const Admin = () => {
           }
           if (responce.status === 206) {
             console.log(responce.data);
-            if(responce.data["errors"]["idOfAttraction"])
+            if (responce.data["errors"]["idOfAttraction"])
               setIdOfAttractionDHasHashtagError(
                 responce.data["errors"]["idOfAttraction"]
               );
-            if(responce.data["errors"]["idOfHashtag"])
+            if (responce.data["errors"]["idOfHashtag"])
               setIdOfHashtafDHasHashtagError(
                 responce.data["errors"]["idOfHashtag"]
               );
-
           }
         })
         .catch((error) => {
@@ -468,14 +494,15 @@ const Admin = () => {
           }
           if (responce.status === 206) {
             console.log(responce.data);
-            if(responce.data["errors"]["idOfAttraction"])
-              setIdOfAttractionCHasActivityError(responce.data["errors"]["idOfAttraction"])
+            if (responce.data["errors"]["idOfAttraction"])
+              setIdOfAttractionCHasActivityError(
+                responce.data["errors"]["idOfAttraction"]
+              );
 
-            if(responce.data["errors"]["idOfActivity"])
+            if (responce.data["errors"]["idOfActivity"])
               setIdOfActivityCHasActivityError(
                 responce.data["errors"]["idOfActivity"]
               );
-
           }
         })
         .catch((error) => {
@@ -497,20 +524,17 @@ const Admin = () => {
             // setIdOfAttractionDHasActivity("")
             // setidOfActivityDHasActivity("")
           }
-          if(responce.status===206)
-          {
+          if (responce.status === 206) {
             console.log(responce.data);
-            if(responce.data["errors"]["idOfAttraction"])
-             setIdOfAttractionDHasActivityError(
-               responce.data["errors"]["idOfAttraction"]
-             );
-
+            if (responce.data["errors"]["idOfAttraction"])
+              setIdOfAttractionDHasActivityError(
+                responce.data["errors"]["idOfAttraction"]
+              );
 
             if (responce.data["errors"]["idOfActivity"])
               setIdOfActivityDHasActivityError(
                 responce.data["errors"]["idOfActivity"]
               );
-
           }
         })
         .catch((error) => {
@@ -537,15 +561,17 @@ const Admin = () => {
             // setIdOfAttractionCHasAttraction("")
             // setIdOfCityCHasAttraction("")
           }
-          if(responce.status===206){
-            console.log(responce.data)
-            if(responce.data['errors']['idOfAttraction'])
-              setIdOfAttractionCHasAttractionError(responce.data['errors']['idOfAttraction'])
+          if (responce.status === 206) {
+            console.log(responce.data);
+            if (responce.data["errors"]["idOfAttraction"])
+              setIdOfAttractionCHasAttractionError(
+                responce.data["errors"]["idOfAttraction"]
+              );
 
-            if(responce.data['errors']['idOfCity'])
+            if (responce.data["errors"]["idOfCity"])
               setIdOfCityCHasAttractionError(
-              responce.data["errors"]["idOfCity"]
-            );
+                responce.data["errors"]["idOfCity"]
+              );
           }
         })
         .catch((error) => {
@@ -579,7 +605,6 @@ const Admin = () => {
                 responce.data["errors"]["idOfCity"]
               );
           }
-          
         })
         .catch((error) => {
           console.error("Error:", error);
@@ -606,7 +631,39 @@ const Admin = () => {
   const onSearch = (value) => {
     console.log("search:", value);
   };
+  const [selectedImages, setSelectedImages] = useState([]);
 
+  const onDrop = (acceptedFiles) => {
+    // Postavljamo slike koje su odabrane
+    setSelectedImages(acceptedFiles);
+  };
+
+  const handleUpload = async () => {
+    // Sastavljamo string sa putanjama do slika
+    const pathsString = selectedImages.map((image) => image.path).join(",");
+
+    // Šaljemo string na backend koristeći axios
+    // try {
+    //   const response = await axios.post("URL_BACKEND/upload", {
+    //     imagePaths: pathsString,
+    //   });
+
+    //   // Postavljamo reaktivne putanje koje su dobijene od backend-a
+    //   setUploadedPaths(response.data.paths);
+    // } catch (error) {
+    //   console.error("Greška pri slanju putanja na backend:", error);
+    // }
+  };
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
+
+  const dropzoneStyles = {
+    border: "2px dashed #ccc",
+    borderRadius: "4px",
+    padding: "20px",
+    textAlign: "center",
+    cursor: "pointer",
+  };
 
   const filterOption = (input, option) =>
     (option?.label ?? "").toLowerCase().includes(input.toLowerCase());
@@ -820,8 +877,29 @@ const Admin = () => {
                   }))}
                 />
               </Form.Item>
+              <Form.Item>
+                <div>
+                  <div {...getRootProps()} style={dropzoneStyles}>
+                    <input {...getInputProps()} />
+                    {isDragActive ? (
+                      <p>Spuštajte slike ovde...</p>
+                    ) : (
+                      <p>Choose photos</p>
+                    )}
+                  </div>
 
-        
+                  {selectedImages.length > 0 && (
+                    <div>
+                      <ul>
+                        {selectedImages.map((image, index) => (
+                          <li key={index}>{image.name}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </Form.Item>
+
               <Form.Item
                 wrapperCol={{
                   offset: 8,

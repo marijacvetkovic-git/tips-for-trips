@@ -1,9 +1,14 @@
 import sys
+import datetime
+
 from flask import Blueprint,render_template,jsonify,flash, request
 from flask_jwt_extended import jwt_required
 from app import app , bcrypt, db ,ma
 from gqlalchemy import match
 from gqlalchemy.query_builders.memgraph_query_builder import Operator
+
+from backend.app.forms import AddVisitedForm, DeleteVisitedForm
+from backend.app.models import Visited
 
 user= Blueprint("user",__name__,static_folder="static",template_folder="templates")
 class AttractionSchema(ma.Schema):
@@ -27,8 +32,6 @@ def recommend(userId):
     # results = attractions_schema.dump(recommendAttractions)
     return jsonify(results)
   
-  
-   
 @user.route('/nearYouRecommendation/<string:usersId>', methods=['GET']) 
 @jwt_required()
 def nearYouRecommendation(usersId):
@@ -343,5 +346,59 @@ def searchEngineNotLoggedIn(searchText):
     listOfResult=list(db.execute_and_fetch(query))
     return jsonify(listOfResult)
 
+
+@user.route('/isVisited/<string:attractionId>/<string:userId>',methods=['GET']) 
+@jwt_required()
+def isVisited(attractionId,userId):
+    query=f"""  MATCH (u:User{{id:'{userId}'}})-[r:VISITED]->(a:Attraction{{id:'{attractionId}'}}) 
+    return u,r,a
+    """
+    listOfResult=list(db.execute_and_fetch(query))
+    if(listOfResult):
+        return jsonify(True),200
+    return jsonify(False),200
     
-    
+@user.route("/createRelationship_VISITED",methods=['POST'])
+@jwt_required()
+def createRelationship_VISITED():
+    req_data=request.get_json()
+
+    form = AddVisitedForm(
+        idOfAttraction=req_data.get("idOfAttraction"),
+        idOfUser=req_data.get("idOfUser"),
+        rate=req_data.get("rate")
+        
+    )
+    if form.validate_on_submit():
+        Visited(_start_node_id=form.tupleForResult[0],_end_node_id=form.tupleForResult[1],rate=form.rate.data,dateAndTime=datetime.datetime.now()).save(db)
+        query=f""" MATCH (a:Attraction)<-[r:VISITED]-() WHERE a.id='{form.idOfAttraction.data}'
+                   WITH a, AVG(r.rate) AS prosecnaOcena
+                   SET a.averageRate = prosecnaOcena;
+                   """
+        db.execute(query)
+        return jsonify({"Message":"VISITED added"}),200
+    else:
+        errors = {"errors": form.errors}
+        return jsonify(errors), 206  
+
+@user.route("/deleteRelationship_VISITED/<string:idOfAttraction>/<string:idOfUser>",methods=['POST'])
+@jwt_required()
+def deleteRelationship_VISITED(idOfAttraction,idOfUser):
+
+    form = DeleteVisitedForm(
+        idOfAttraction=idOfAttraction,
+        idOfUser=idOfUser
+    )
+    if form.validate_on_submit():
+        query=f""" MATCH (a:Attraction{{id:'{form.idOfAttraction.data}'}})<-[r:VISITED]-(u:User{{id:'{form.idOfUser.data}'}}) 
+        DELETE r"""
+        db.execute(query)
+        query=f""" MATCH (a:Attraction)<-[r:VISITED]-() WHERE a.id='{form.idOfAttraction.data}'
+                   WITH a, AVG(r.rate) AS prosecnaOcena
+                   SET a.averageRate = prosecnaOcena;
+                   """          
+        db.execute(query)
+        return jsonify({"Message":"VISITED deleted"}),200
+    else:
+        errors = {"errors": form.errors}
+        return jsonify(errors), 206  
