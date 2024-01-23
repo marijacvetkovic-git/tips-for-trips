@@ -19,7 +19,7 @@ const Home = () => {
   const navigate = useNavigate();
   const [nearYou, setNearYou] = useState(false);
   const [listOfAttractions, setListOfAttractions] = useState([]);
-  const [title, setTitle] = useState("Recommended for U <3");
+  const [title, setTitle] = useState("Recommended for you");
   useEffect(() => {
     console.log(localStorage.getItem("token"));
     if (localStorage.getItem("token") === null) {
@@ -50,7 +50,7 @@ const Home = () => {
           .then((responce) => {
             if (responce.status === 200) {
               console.log(responce.data);
-              setTitle("Recommended for U <3");
+              setTitle("Recommended for you ");
 
               // console.log(responce.data["listOfAttractions"])
               setListOfAttractions(responce.data);
@@ -70,7 +70,7 @@ const Home = () => {
             if (responce.status === 200) {
               console.log(responce.data);
               setListOfAttractions(responce.data);
-              setTitle("Near U");
+              setTitle("Near you");
             }
           })
           .catch((error) => {
@@ -102,7 +102,37 @@ const Home = () => {
         onSearch={handleOnSearch}
         enterButton
       />
-      <h1>{title}</h1>
+      <div style={{ textAlign: "center", marginTop: "20px" }}>
+        <h1
+          style={{
+            fontFamily: "'Playfair Display', serif",
+            fontWeight: 550,
+            fontSize: "50px",
+            margin: "10px 0",
+          }}
+        >
+          Welcome to TipsForTrips
+        </h1>
+        <img
+          src="/logo.png"
+          alt="TipsForTrips Logo"
+          style={{ marginBottom: "10vh", width: "17vw", height: "auto" }}
+        />
+      </div>
+      
+        <h1
+          style={{
+            fontFamily: "'Roboto', sans-serif",
+            fontWeight: 550,
+            color: "#133115",
+            fontSize: "22px",
+            margin: "10px 0",
+            fontStyle: "italic",
+          }}
+        >
+          {title}
+        </h1>
+    
       <Space size={[8, 16]} style={spaceStyle} wrap>
         {listOfAttractions &&
           listOfAttractions.map((item) => (
@@ -112,7 +142,6 @@ const Home = () => {
               id={item["id"]}
               style={{
                 width: 240,
-                
               }}
               onClick={() => handleOnClick(item["id"])}
               cover={
@@ -122,7 +151,7 @@ const Home = () => {
                   style={{
                     display: "block",
                     width: "100%",
-                    height:"30vh"
+                    height: "30vh",
                   }}
                 />
               }

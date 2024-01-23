@@ -16,6 +16,8 @@ import { Layout, Menu, theme } from 'antd';
 import { getExpiration, getUserRole, getUsername } from './utils';
 import { UserOutlined } from "@ant-design/icons";
 import { Avatar } from "antd";
+import backgroundImage from "./background.png"; // Uvezite sliku pomoću import-a
+
 
 
 import Preferences from './components/Preferences';
@@ -33,7 +35,7 @@ function App() {
 
   const logOut=()=>{
     localStorage.removeItem("token");
-    window.location = "/";
+    window.location = "/home";
   }
 
   const isTokenExpired = () => {
@@ -62,7 +64,7 @@ function App() {
           style={{
             display: "flex",
             alignItems: "center",
-            // backgroundColor: "#2B532D",
+            backgroundColor: "#133115",
           }}
         >
           <div className="demo-logo" />
@@ -71,7 +73,7 @@ function App() {
             mode="horizontal"
             defaultSelectedKeys={"1"}
             style={{
-              // backgroundColor: "#2B532D",
+              backgroundColor: "#133115",
               flex: 1,
               minWidth: 0,
             }}
@@ -120,12 +122,22 @@ function App() {
         >
           <div
             style={{
-              background: colorBgContainer,
+              background: "#89BA90",
               minHeight: 280,
               padding: 24,
               borderRadius: borderRadiusLG,
             }}
-          >
+            >
+
+            {/* <div
+            style={{
+              background: colorBgContainer,
+              backgroundColor:"#89BA90",
+              minHeight: 280,
+              padding: 24,
+              borderRadius: borderRadiusLG,
+            }}
+          > */}
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/home" element={<Home />} />

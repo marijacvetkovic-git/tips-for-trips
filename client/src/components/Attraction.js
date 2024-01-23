@@ -22,6 +22,7 @@ const Attraction = () => {
   const [modalTitle, setModalTitle] = useState("");
   const [visited,setVisited]=useState(false)
   const [rateValue,setRateValue]=useState(0)
+  const [currentSlide, setCurrentSlide] = useState(0);
   const showModal = (item, content) => {
     console.log(content);
     let experience = "not needed";
@@ -107,18 +108,22 @@ const Attraction = () => {
 
     setOpen(newOpen);
   };
-   const [currentSlide, setCurrentSlide] = useState(0);
+   
 
 
 const nextSlide = () => {
+  console.log("Next Slide");
   setCurrentSlide((prevSlide) => (prevSlide + 1) % attractionImages.length);
 };
 
 const prevSlide = () => {
+  console.log("Prev Slide");
   setCurrentSlide(
-    (prevSlide) => (prevSlide - 1 + attractionImages.length) % attractionImages.length
+    (prevSlide) =>
+      (prevSlide - 1 + attractionImages.length) % attractionImages.length
   );
 };
+
 
 
 const carouselStyle = {
@@ -169,7 +174,7 @@ const rateContent = (
     <>
       <div
         style={{
-          // display: "flex",
+          //display: "flex",
           alignItems: "center",
           justifyContent: "center",
         }}
@@ -186,7 +191,7 @@ const rateContent = (
           <h1 style={{ margin: 0 }}>{attractionName}</h1>
         </div>
 
-        <div style={{ display: "flex", justifyContent: "end"}}>
+        <div style={{ display: "flex", justifyContent: "end" }}>
           {localStorage.getItem("token") &&
             (visited ? (
               <>
@@ -195,7 +200,7 @@ const rateContent = (
                   twoToneColor="#52c41a"
                   style={{ fontSize: "24px", marginRight: "5px" }}
                 />
-                <span style={{ color: "#52c41a" }}>Visited</span>
+                <span style={{ color: "#08500F" }}>Visited</span>
               </>
             ) : (
               <>
@@ -225,35 +230,6 @@ const rateContent = (
                     Not visited yet
                   </a>
                 </Popover>
-                {/* <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault(); // Ovo sprečava defaultno ponašanje linka (npr. da se preusmeri na drugu stranicu)
-                    handleNotVisitedClick();
-                  }}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    textDecoration: "underline",
-                    color: "#C44C37",
-                  }}
-                >
-                  <Popover
-                    content={<a onClick={hide}>Close</a>}
-                    title="Title"
-                    trigger="click"
-                    open={open}
-                    onOpenChange={handleNotVisitedClick}
-                  >
-                    <span>
-                      <QuestionCircleTwoTone
-                        twoToneColor="#C44C37"
-                        style={{ fontSize: "24px", marginRight: "5px" }}
-                      />
-                      Not visited yet
-                    </span>
-                  </Popover>
-                </a> */}
               </>
             ))}
         </div>
@@ -270,6 +246,7 @@ const rateContent = (
             />
           ))}
         </div>
+
         <div
           style={{
             display: "flex",
@@ -294,7 +271,7 @@ const rateContent = (
         </div>
       </div>
       <>
-        <Rate disabled value={attractionAvgRate}  />
+        <Rate disabled value={attractionAvgRate} />
         <span>{attractionAvgRate.toFixed(2)}</span>
       </>
       <div>
