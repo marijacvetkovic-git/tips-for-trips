@@ -193,6 +193,7 @@ const rateContent = (
               fontFamily: "'Playfair Display', serif",
               fontSize: "30px",
               fontWeight: 600,
+              color: "#294B29",
 
               margin: 0,
             }}
@@ -286,18 +287,26 @@ const rateContent = (
       </>
       <div>
         <h2>
-          <i>Fun facts:</i>
+          <i style={{ color: "#294B29" }}>Fun facts:</i>
         </h2>
-        <p style={{ whiteSpace: "pre-line" }}>{attractionDescription}</p>
+        <p
+          style={{
+            fontFamily: "'Poppins', sans-serif",
+            whiteSpace: "pre-line",
+          }}
+        >
+          {attractionDescription}
+        </p>
 
         {attractionActivities.length != 0 && (
           <>
             <h2>
-              <i>Activities:</i>
+              <i style={{ color: "#294B29" }}>Activities:</i>
             </h2>
             <Space>
               {
                 <List
+                  style={{ background: "#99BC85" }}
                   bordered
                   dataSource={attractionActivities}
                   renderItem={(item, index) => (

@@ -178,25 +178,36 @@ const PlanYourTrip = () => {
           onFinish={handleOk}
         >
           <h2>Plan your trip</h2>
-          <Select
-            showSearch
-            style={{ marginBottom: "8px" }}
-            placeholder="Select a city"
-            optionFilterProp="children"
-            onChange={onChangeCity}
-            onSearch={onSearch}
-            filterOption={filterOption}
+          <Form.Item
+            name="city"
             rules={[
               {
                 required: true,
-                message: "Please select some city",
+                message: "Please select a city",
               },
             ]}
-            options={listOfCities.map((item) => ({
-              value: item["id"],
-              label: item["name"],
-            }))}
-          />
+          >
+            <Select
+              showSearch
+              style={{ marginBottom: "8px" }}
+              placeholder="Select a city"
+              optionFilterProp="children"
+              onChange={onChangeCity}
+              onSearch={onSearch}
+              filterOption={filterOption}
+              rules={[
+                {
+                  required: true,
+                  message: "Please select some city",
+                },
+              ]}
+              options={listOfCities.map((item) => ({
+                value: item["id"],
+                label: item["name"],
+              }))}
+            />
+          </Form.Item>
+          
           <Input
             value={pickedKms}
             style={{ marginBottom: "8px" }}

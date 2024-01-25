@@ -16,7 +16,6 @@ import { Layout, Menu, theme } from 'antd';
 import { getExpiration, getUserRole, getUsername } from './utils';
 import { UserOutlined } from "@ant-design/icons";
 import { Avatar } from "antd";
-import backgroundImage from "./background.png"; // Uvezite sliku pomoću import-a
 
 
 
@@ -64,7 +63,7 @@ function App() {
           style={{
             display: "flex",
             alignItems: "center",
-            backgroundColor: "#133115",
+            backgroundColor: "#294B29",
           }}
         >
           <div className="demo-logo" />
@@ -73,7 +72,8 @@ function App() {
             mode="horizontal"
             defaultSelectedKeys={"1"}
             style={{
-              backgroundColor: "#133115",
+              backgroundColor: "#294B29",
+
               flex: 1,
               minWidth: 0,
             }}
@@ -102,7 +102,6 @@ function App() {
                   <Link to={"/planYourTrip"}>Plan trip</Link>
                 </MenuItem>
 
-
                 {getUserRole() == true && (
                   <MenuItem key={"3"} style={{ float: "left" }}>
                     <Link to={"/admin"}>Admin</Link>
@@ -118,13 +117,15 @@ function App() {
         <Content
           style={{
             padding: "48px 48px",
+            background: "#DBE7C9",
           }}
         >
           <div
             style={{
-              background: "#89BA90",
+              background: "white",
               minHeight: 280,
               padding: 24,
+
               borderRadius: borderRadiusLG,
             }}
           >

@@ -123,6 +123,7 @@ const Home = () => {
             fontSize: "50px",
             margin: "10px 0",
             fontStyle: "italic",
+            color: "#294B29",
           }}
         >
           Welcome to TipsForTrips
@@ -139,9 +140,9 @@ const Home = () => {
           fontFamily: "'Playfair Display', serif",
 
           fontWeight: 600,
-          color: "#133115",
           fontSize: "22px",
           margin: "10px 0",
+          color: "#50623A",
         }}
       >
         {title}
@@ -170,7 +171,12 @@ const Home = () => {
                 />
               }
             >
-              <Meta title={item["name"]} />
+              <Meta
+                style={{
+                  fontFamily: "'Poppins', sans-serif",
+                }}
+                title={item["name"]}
+              />
             </Card>
           ))}
       </Space>
@@ -181,10 +187,10 @@ const Home = () => {
               fontFamily: "'Playfair Display', serif",
 
               fontWeight: 600,
-              color: "#133115",
               fontSize: "22px",
               margin: "10px 0",
               marginTop: "7vh",
+              color: "#50623A",
             }}
           >
             Most Recommended
@@ -227,10 +233,9 @@ const Home = () => {
             type="primary"
             style={{
               right: 24,
-              fontSize: "36px", // Adjust the fontSize as needed
-              width: "50px", // Adjust the width as needed
-              height: "50px", // Adjust the height as needed
-              // Add any other styling properties you want to customize
+              fontSize: "36px",
+              width: "50px",
+              height: "50px",
             }}
             title="Near you"
             onClick={() => setNearYou(true)}
