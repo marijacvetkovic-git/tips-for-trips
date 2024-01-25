@@ -7,8 +7,10 @@ from app import app , bcrypt, db ,ma
 from gqlalchemy import match
 from gqlalchemy.query_builders.memgraph_query_builder import Operator
 
-from backend.app.forms import AddVisitedForm, DeleteVisitedForm
-from backend.app.models import Visited
+from app.forms import AddVisitedForm, DeleteVisitedForm
+from app.models import Visited
+
+
 
 user= Blueprint("user",__name__,static_folder="static",template_folder="templates")
 class AttractionSchema(ma.Schema):
@@ -72,7 +74,7 @@ WITH a,
     ) AS udaljenost,i
 RETURN a.id as id, a.name as name , udaljenost , i.path as image
 ORDER BY udaljenost
-LIMIT 10;
+LIMIT 5;
  """
           
     fetchNearestAttractions=db.execute_and_fetch(query)
@@ -112,7 +114,7 @@ def planTrip():
     if(pickedDuration!=""):
         duration=True
         durationH, durationM, durationS = map(int, pickedDuration.split(':'))
-    pickedM=float(pickedKm)*1000
+    # pickedM=float(pickedKm)*1000
     
     query=""
 
@@ -146,24 +148,24 @@ def planTrip():
      REDUCE(s = 0.0, r IN rels | s + COALESCE(toInteger(split(coalesce(toString(r.durationOfActivity), ""), ":")[0])*3600 + toInteger(split(coalesce(toString(r.durationOfActivity), ""), ":")[1])*60 + toInteger(split(coalesce(toString(r.durationOfActivity), ""), ":")[2]), 0.0))+(a.durationOfVisit.hour * 3600 + a.durationOfVisit.minute * 60 + a.durationOfVisit.second) AS totalDuration,
         6371 * 2 * atan2(
         sqrt(
-                sin((a.latitude - {latitude}) * 3.14 / 360) * 
-                sin((a.latitude - {latitude}) * 3.14 / 360) +
-                cos({latitude} * 3.14 / 180) * 
-                cos(a.latitude * 3.14 / 180) * 
-                sin((a.longitude - {longitude}) * 3.14 / 360) * 
-                sin((a.longitude - {longitude}) * 3.14 / 360)
+                sin((toFloat(a.latitude)- toFloat({latitude})) * 3.14 / 360) * 
+                sin((toFloat(a.latitude) - toFloat({latitude})) * 3.14 / 360) +
+                cos(toFloat({latitude}) * 3.14 / 180) * 
+                cos(toFloat(a.latitude) * 3.14 / 180) * 
+                sin(toFloat((a.longitude) - toFloat({longitude})) * 3.14 / 360) * 
+                sin((toFloat(a.longitude) - toFloat({longitude})) * 3.14 / 360)
             ),
         sqrt(
-                1 - sin((a.latitude - {latitude}) * 3.14 / 360) * 
-                sin((a.latitude - {latitude}) * 3.14 / 360) +
-                cos({latitude} * 3.14 / 180) * 
-                cos(a.latitude * 3.14 / 180) * 
-                sin((a.longitude - {longitude}) * 3.14 / 360) * 
-                sin((a.longitude - {longitude}) * 3.14 / 360)
+                1 - sin((toFloat(a.latitude)- toFloat({latitude})) * 3.14 / 360) * 
+                sin((toFloat(a.latitude) - toFloat({latitude})) * 3.14 / 360) +
+                cos(toFloat({latitude}) * 3.14 / 180) * 
+                cos(toFloat(a.latitude) * 3.14 / 180) *
+                sin(toFloat((a.longitude) - toFloat({longitude})) * 3.14 / 360) * 
+                sin((toFloat(a.longitude) - toFloat({longitude})) * 3.14 / 360)
             )
         ) AS udaljenost """
     if (int(pickedKm)!=0):
-        query+=f"""WHERE udaljenost<{pickedM}"""
+        query+=f"""WHERE udaljenost<{pickedKm}"""
         
     if(duration):
         if (int(pickedKm)==0):
@@ -175,7 +177,7 @@ def planTrip():
         """
     
     query+=f"""RETURN a.id as id, a.name as name, a.averageRate as avgRate , toInteger(totalDuration/3600) as houres, toInteger((totalDuration % 3600) / 60) as minutes,toInteger(totalDuration % 60) as seconds,
-       commonActivities as matchedActivities,udaljenost/1000 as distaneInKm,i.path as image
+       commonActivities as matchedActivities,udaljenost as distaneInKm,i.path as image
 
         ORDER BY udaljenost,commonActivities DESC 
         """

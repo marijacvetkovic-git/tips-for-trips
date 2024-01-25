@@ -59,7 +59,7 @@ const Attraction = () => {
           setAttractionHashtags(responce.data[0]["hashtags"]);
           setAttractionImages(responce.data[0]["images"]);
           setAttractionAvgRate(responce.data[0]["avgRate"]);
-          console.log(responce.data[0]["images"]);
+          console.log(responce.data[0]["description"]);
         }
       })
       .catch((error) => {
@@ -188,7 +188,17 @@ const rateContent = (
             flex: 1,
           }}
         >
-          <h1 style={{ margin: 0 }}>{attractionName}</h1>
+          <h1
+            style={{
+              fontFamily: "'Playfair Display', serif",
+              fontSize: "30px",
+              fontWeight: 600,
+
+              margin: 0,
+            }}
+          >
+            {attractionName}
+          </h1>
         </div>
 
         <div style={{ display: "flex", justifyContent: "end" }}>
@@ -278,7 +288,7 @@ const rateContent = (
         <h2>
           <i>Fun facts:</i>
         </h2>
-        <p>{attractionDescription}</p>
+        <p style={{ whiteSpace: "pre-line" }}>{attractionDescription}</p>
 
         {attractionActivities.length != 0 && (
           <>

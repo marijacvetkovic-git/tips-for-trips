@@ -10,7 +10,7 @@ from app.models import HasActivity, HasAttraction, HasHashtag, HasImage, Image, 
 admin= Blueprint("admin",__name__,static_folder="static",template_folder="templates")
 
 @admin.route("/addImage/<string:attractionId>",methods=['POST'])
-@jwt_required()
+# @jwt_required()
 def addImage(attractionId):
     req_data = request.get_json() 
     path=req_data.get("path")

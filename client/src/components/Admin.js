@@ -18,6 +18,14 @@ import { UploadOutlined } from "@ant-design/icons";
 import FormItem from "antd/es/form/FormItem";
 
 const Admin = () => {
+  const [messageApi, contextHolder] = message.useMessage();
+  const success = () => {
+     messageApi.open({
+       type: "success",
+       content: "Success!",
+     });
+   };
+
   const [duration, setDuration] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -140,6 +148,41 @@ const Admin = () => {
     setIdOfAttractionDHasAttractionError("");
     setIdOfCityDHasAttractionError("");
   };
+  const cleanFields=()=>{
+    console.log('Cao')
+    setDuration("");
+    setName("");
+    setDescription("");
+    setFamilyFriendly("");
+    setLongitude("");
+    setLatitude("");
+    setParking("");
+    setListOfCities([]);
+    setPickedCity("");
+    setIdOfAttractionDelete("");
+    setPickedAction("");
+    setHashtagName("");
+    setHashtagId("");
+    setActivityName("");
+    setActivityId("");
+    setCityName("");
+    setCityId("");
+    setCityDescription("");
+    setIdOfAttractionCHasHashtag("");
+    setIdOfHashtafCHasHashtag("");
+    setIdOfAttractionDHasHashtag("");
+    setIdOfHashtafDHasHashtag("");
+    setIdOfAttractionCHasActivity("");
+    setIdOfActivityCHasActivity("");
+    setDurationOfActivity("");
+    setIdOfAttractionDHasActivity("");
+    setIdOfActivityDHasActivity("");
+    setIdOfAttractionCHasAttraction("");
+    setIdOfCityCHasAttraction("");
+    setIdOfAttractionDHasAttraction("");
+    setIdOfCityDHasAttraction("");
+
+  }
   useEffect(() => {
     axios
       .get("http://127.0.0.1:5000/helpers/getCities")
@@ -156,7 +199,8 @@ const Admin = () => {
 
   const onFinish = () => {
     cleanErrors();
-    let idOfAttractionCHasAttraction = 0;
+    // cleanFields();
+    // let idOfAttractionCHasAttraction = 0;
     console.log("Success:");
     let obj = {};
     console.log(pickedAction);
@@ -179,10 +223,10 @@ const Admin = () => {
           if (responce.status === 200) {
             console.log(responce.data);
             const idOfCityCHasAttraction = pickedCity;
-            idOfAttractionCHasAttraction = responce.data["id"];
+            const idOfAttractionCHasAttraction = responce.data["id"];
             const body = {
               idOfCityCHasAttraction,
-              idOfAttractionCHasAttraction,
+              idOfAttractionCHasAttraction
             };
             axios
               .post(
@@ -215,6 +259,7 @@ const Admin = () => {
                       .then((responce) => {
                         if (responce.status === 200) {
                           console.log(responce.data);
+                          
                         }
                         if (responce.status === 206) {
                           console.log(responce.data);
@@ -224,6 +269,9 @@ const Admin = () => {
                         console.error("Error:", error);
                       });
                   });
+                  success();
+                  
+
                 }
                 if (responce.status === 206) {
                   console.log(responce.data);
@@ -259,6 +307,8 @@ const Admin = () => {
         .then((responce) => {
           if (responce.status === 200) {
             console.log(responce.data);
+            success();
+
             // setIdOfAttractionDelete("")
           }
           if (responce.status === 206) {
@@ -279,6 +329,7 @@ const Admin = () => {
         .then((responce) => {
           if (responce.status === 200) {
             console.log(responce.data);
+            success();
             // setHashtagName("")
           }
           if (responce.status === 206) {
@@ -298,6 +349,8 @@ const Admin = () => {
         .then((responce) => {
           if (responce.status === 200) {
             console.log(responce.data);
+            success();
+            setHashtagId("")
           }
           if (responce.status === 206) {
             console.log(responce.data);
@@ -321,6 +374,7 @@ const Admin = () => {
         .then((responce) => {
           if (responce.status === 200) {
             console.log(responce.data);
+            success();
             // setActivityName("")
           }
           if (responce.status === 206) {
@@ -341,6 +395,7 @@ const Admin = () => {
         .then((responce) => {
           if (responce.status === 200) {
             console.log(responce.data);
+            success();
             // setActivityId("")
           }
           if (responce.status == 206) {
@@ -364,6 +419,7 @@ const Admin = () => {
         .then((responce) => {
           if (responce.status === 200) {
             console.log(responce.data);
+            success();
             // setCityName("")
             // setCityDescription("")
           }
@@ -385,6 +441,7 @@ const Admin = () => {
         .then((responce) => {
           if (responce.status === 200) {
             console.log(responce.data);
+            success();
             // setCityId("")
           }
           if (responce.status === 206) {
@@ -409,6 +466,7 @@ const Admin = () => {
         .then((responce) => {
           if (responce.status === 200) {
             console.log(responce.data);
+            success();
             // setIdOfAttractionCHasHashtag("")
             // setIdOfHashtafCHasHashtag("")
           }
@@ -445,6 +503,7 @@ const Admin = () => {
         .then((responce) => {
           if (responce.status === 200) {
             console.log(responce.data);
+            success();
             // setIdOfAttractionDHasHashtag("")
             // setIdOfHashtafDHasHashtag("")
           }
@@ -485,6 +544,7 @@ const Admin = () => {
         .then((responce) => {
           if (responce.status === 200) {
             console.log(responce.data);
+            success();
             // setIdOfAttractionCHasActivity("")
             // setIdOfActivityCHasActivity("")
             // setDurationOfActivity("");
@@ -521,6 +581,7 @@ const Admin = () => {
         .then((responce) => {
           if (responce.status === 200) {
             console.log(responce.data);
+            success();
             // setIdOfAttractionDHasActivity("")
             // setidOfActivityDHasActivity("")
           }
@@ -541,6 +602,7 @@ const Admin = () => {
           console.error("Error:", error);
         });
     } else if (pickedAction == "addHAS_ATTRACTION") {
+      console.log(idOfAttractionCHasAttraction);
       obj = {
         idOfAttractionCHasAttraction,
         idOfCityCHasAttraction,
@@ -558,6 +620,7 @@ const Admin = () => {
         .then((responce) => {
           if (responce.status === 200) {
             console.log(responce.data);
+            success();
             // setIdOfAttractionCHasAttraction("")
             // setIdOfCityCHasAttraction("")
           }
@@ -590,6 +653,7 @@ const Admin = () => {
         .then((responce) => {
           if (responce.status === 200) {
             console.log(responce.data);
+            success();
             // setIdOfCityDHasAttraction("")
             // setIdOfAttractionDHasAttraction("")
           }
@@ -610,6 +674,8 @@ const Admin = () => {
           console.error("Error:", error);
         });
     }
+
+    // cleanFields()
   };
 
   const onFinishFailed = (errorInfo) => {
@@ -670,6 +736,7 @@ const Admin = () => {
 
   return (
     <>
+      {contextHolder}
       <>
         <Space
           direction="vertical"
@@ -1820,7 +1887,7 @@ const Admin = () => {
 
             <Form.Item
               label="Id of attraction"
-              name="idOfAttraction"
+              name="idOfAttractionn"
               value={idOfAttractionCHasAttraction}
               onChange={(e) => setIdOfAttractionCHasAttraction(e.target.value)}
               rules={[

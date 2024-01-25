@@ -89,13 +89,35 @@ const PlanYourTrip = () => {
         console.error("Error:", error);
       });
   };
+  // const data = listOfAttractions.map((attraction, i) => {
+  //   let distanceValue = attraction["distaneInKm"];
+  //   let distanceUnit = "km";
+
+  //   // Ako je distanceInKm manje od 1, množi sa 1000 i postavi jedinicu na "m"
+  //   if (distanceValue < 1) {
+  //     distanceValue *= 1000;
+  //     distanceUnit = "m";
+  //   }
+
+  //   return {
+  //     href: "/home",
+  //     title: attraction["name"],
+  //     content: `Total duration with matched activities ${attraction["houres"]}:${attraction["minutes"]}:${attraction["seconds"]} 
+  //     Number of matched activities ${attraction["matchedActivities"]} 
+  //     Distance ${distanceValue} ${distanceUnit}`,
+  //     id: attraction["id"],
+  //     avgRate: attraction["avgRate"],
+  //     image: attraction["image"],
+  //   };
+  // });
+
 
   const data = listOfAttractions.map((attraction, i) => ({
     href: "/home",
     title: attraction["name"],
     content: `Total duration with matched activities ${attraction["houres"]}:${attraction["minutes"]}:${attraction["seconds"]} 
   Number of matched activities ${attraction["matchedActivities"]} 
-  Distance in km ${attraction["distaneInKm"]}`,
+  Distance in km ${attraction["distaneInKm"].toFixed(2)}`,
     id: attraction["id"],
     avgRate: attraction["avgRate"],
     image:attraction["image"]
@@ -229,7 +251,7 @@ const PlanYourTrip = () => {
             value={maxDestinations}
             style={{ marginBottom: "8px" }}
             type="number"
-            placeholder="Max destinations, default 5"
+            placeholder="Max destinations"
             onChange={(e) => setMaxDestinations(e.target.value)}
           />
           <Button type="primary" htmlType="submit">

@@ -102,15 +102,15 @@ function App() {
                   <Link to={"/planYourTrip"}>Plan trip</Link>
                 </MenuItem>
 
-                <MenuItem key={"3"} style={{ float: "left" }}>
-                  <Link onClick={logOut}>LogOut</Link>
-                </MenuItem>
 
                 {getUserRole() == true && (
-                  <MenuItem key={"4"} style={{ float: "left" }}>
+                  <MenuItem key={"3"} style={{ float: "left" }}>
                     <Link to={"/admin"}>Admin</Link>
                   </MenuItem>
                 )}
+                <MenuItem key={"4"} style={{ float: "left" }}>
+                  <Link onClick={logOut}>Log Out</Link>
+                </MenuItem>
               </>
             )}
           </Menu>
@@ -127,8 +127,7 @@ function App() {
               padding: 24,
               borderRadius: borderRadiusLG,
             }}
-            >
-
+          >
             {/* <div
             style={{
               background: colorBgContainer,

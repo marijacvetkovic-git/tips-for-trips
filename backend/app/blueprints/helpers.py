@@ -35,6 +35,7 @@ def returnMostRecommendedAttractions():
     WITH a,COUNT(r) as numberOfRecommendation,i
     RETURN a.id as id ,a.name as name,numberOfRecommendation, i.path as image
     ORDER BY numberOfRecommendation DESC
+    LIMIT 10
     """
     listOfAttractions=list(db.execute_and_fetch(query))
     return jsonify({"listOfAttractions":listOfAttractions})
@@ -43,11 +44,12 @@ def returnMostRecommendedAttractions():
 def returnAttraction(id):
     query=f"""MATCH (a:Attraction) WHERE a.id='{id}'
 OPTIONAL MATCH (a)-[r:HAS_ACTIVITY]->(activity:Activity) 
+with a,COLLECT(DISTINCT activity.name) AS activitiesForAttraction,COLLECT(DISTINCT r) as relationship
 OPTIONAL MATCH (a)-[r1:HAS_HASHTAG]->(h:Hashtag)
+with a, COLLECT(DISTINCT h.name) as hashtags,activitiesForAttraction,relationship
 OPTIONAL MATCH (a)-[r2:HAS_IMAGE]->(i:Image)
- WITH a,COLLECT(DISTINCT i.path) as images,COLLECT(DISTINCT activity.name) AS activitiesForAttraction, COLLECT(DISTINCT r) as relationship , COLLECT(DISTINCT h.name) as hashtags
-    return a.id as id , a.name as name ,a.description as description, a.averageRate as avgRate,images, activitiesForAttraction,relationship, hashtags
-    """
+WITH a,COLLECT(DISTINCT i.path) as images,hashtags,activitiesForAttraction,relationship
+return a.id as id , a.name as name ,a.description as description, a.averageRate as avgRate,images, activitiesForAttraction,relationship, hashtags  """
     resultList=list(db.execute_and_fetch(query))
     listOfAttractionInformation=[]
     for item in resultList:
@@ -92,10 +94,11 @@ def getLongitudeLatitude(userId):
 @helpers.route("/getUser/<string:userId>",methods=["GET"])
 def getUser(userId):
     query=f"""  MATCH (u:User) where u.id='{userId}'
-    MATCH (u)-[r:WANTS_TO_SEE]->(h:Hashtag)
- OPTIONAL MATCH (u)-[r1:VISITED]->(a:Attraction)
-    WITH u, COLLECT(DISTINCT h.name) as hashtags, COLLECT(DISTINCT a.name) as attractionNames, COLLECT(DISTINCT a.id) as attractionIds
-    RETURN u.username as username, u.dateOfBirth as date, u.email as email, hashtags ,attractionNames , attractionIds"""
+      MATCH (u)-[r:WANTS_TO_SEE]->(h:Hashtag)
+    WITH u, COLLECT(DISTINCT h.name) as hashtags
+    OPTIONAL MATCH (u)-[r1:VISITED]->(a:Attraction)
+    WITH u,  COLLECT(DISTINCT a.name) as attractionNames,hashtags
+    RETURN u.username as username, u.dateOfBirth as date, u.email as email, hashtags ,attractionNames """
     resultList=list(db.execute_and_fetch(query))
     return jsonify(resultList)
 
